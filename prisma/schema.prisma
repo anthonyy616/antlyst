@@ -1,0 +1,118 @@
+// Neon Postgres Schema
+// RLS (Row Level Security) will be handled by Clerk orgId filtering in queries
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Synced from Clerk via webhook
+model Organization {
+  id        String   @id // Clerk org_xxx ID
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  projects Project[]
+
+  @@map("organizations")
+}
+
+// Synced from Clerk via webhook
+model User {
+  id             String   @id // Clerk user_xxx ID
+  email          String   @unique
+  name           String?
+  imageUrl       String?
+  organizationId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projects     Project[]     @relation("ProjectOwner")
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+// Each uploaded dataset becomes a Project
+model Project {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String // RLS: filter by this
+  ownerId        String
+  status         String   @default("pending") // pending, processing, ready, failed
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner        User         @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  files      File[]
+  dashboards Dashboard[]
+  analyses   Analysis[]
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@map("projects")
+}
+
+// Uploaded raw files (CSV, Excel, etc.)
+model File {
+  id           String   @id @default(cuid())
+  projectId    String
+  fileName     String
+  fileSize     Int
+  mimeType     String
+  r2Key        String // path in R2 bucket
+  r2Url        String // full R2 URL
+  uploadStatus String   @default("pending") // pending, uploaded, failed
+  createdAt    DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("files")
+}
+
+// Processed analysis results (links to Parquet + manifest in R2)
+model Analysis {
+  id              String   @id @default(cuid())
+  projectId       String
+  analysisType    String // descriptive, correlation, timeseries, forecast, etc.
+  status          String   @default("pending") // pending, completed, failed
+  parquetR2Key    String? // processed data in Parquet
+  manifestR2Key   String? // manifest.json location
+  errorMessage    String?
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("analyses")
+}
+
+// Dashboard instances (one per style: simple, ml, powerbi)
+model Dashboard {
+  id          String   @id @default(cuid())
+  projectId   String
+  style       String // simple, ml, powerbi
+  embedUrl    String? // generated iframe URL
+  isActive    Boolean  @default(true)
+  config      Json? // style-specific config
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, style])
+  @@index([projectId])
+  @@map("dashboards")
+}
