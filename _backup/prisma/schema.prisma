@@ -1,3 +1,6 @@
+// Neon Postgres Schema
+// RLS (Row Level Security) will be handled by Clerk orgId filtering in queries
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -37,83 +40,79 @@ model User {
   @@map("users")
 }
 
+// Each uploaded dataset becomes a Project
 model Project {
   id             String   @id @default(cuid())
   name           String
-  organizationId String
+  description    String?
+  organizationId String // RLS: filter by this
   ownerId        String
   status         String   @default("pending") // pending, processing, ready, failed
-  description    String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  
+
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   owner        User         @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
-  files          File[]
-  dashboards     Dashboard[]
-  analyses       Analysis[]
+  files      File[]
+  dashboards Dashboard[]
+  analyses   Analysis[]
 
   @@index([organizationId])
   @@index([ownerId])
   @@map("projects")
 }
 
+// Uploaded raw files (CSV, Excel, etc.)
 model File {
   id           String   @id @default(cuid())
   projectId    String
-  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   fileName     String
   fileSize     Int
   mimeType     String
-  r2Key        String
-  r2Url        String
-  uploadStatus String   @default("pending") // pending, uploaded, processing, completed, failed
+  r2Key        String // path in R2 bucket
+  r2Url        String // full R2 URL
+  uploadStatus String   @default("pending") // pending, uploaded, failed
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  analysisResult AnalysisResult?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@map("files")
 }
 
-model Dashboard {
-  id        String   @id @default(cuid())
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  style     String   // simple, ml, powerbi
-  url       String?  // URL to the dashboard (e.g. Lightdash, Evidence)
-  config    Json?    // Store specific config for the engine
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([projectId])
-  @@map("dashboards")
-}
-
+// Processed analysis results (links to Parquet + manifest in R2)
 model Analysis {
-  id           String   @id @default(cuid())
-  projectId    String
-  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  analysisType String   // e.g. "correlation", "distribution"
-  status       String   @default("pending")
-  results      Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(cuid())
+  projectId       String
+  analysisType    String // descriptive, correlation, timeseries, forecast, etc.
+  status          String   @default("pending") // pending, completed, failed
+  parquetR2Key    String? // processed data in Parquet
+  manifestR2Key   String? // manifest.json location
+  errorMessage    String?
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@map("analyses")
 }
 
-model AnalysisResult {
+// Dashboard instances (one per style: simple, ml, powerbi)
+model Dashboard {
   id          String   @id @default(cuid())
-  fileId      String   @unique
-  file        File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
-  manifestUrl String?
-  parquetUrl  String?
-  stats       Json?
+  projectId   String
+  style       String // simple, ml, powerbi
+  embedUrl    String? // generated iframe URL
+  isActive    Boolean  @default(true)
+  config      Json? // style-specific config
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  @@map("analysis_results")
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, style])
+  @@index([projectId])
+  @@map("dashboards")
 }
