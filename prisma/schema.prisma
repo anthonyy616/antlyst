@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Synced from Clerk via webhook
+model Organization {
+  id        String   @id // Clerk org_xxx ID
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  projects Project[]
+
+  @@map("organizations")
+}
+
+// Synced from Clerk via webhook
+model User {
+  id             String   @id // Clerk user_xxx ID
+  email          String   @unique
+  name           String?
+  imageUrl       String?
+  organizationId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projects     Project[]     @relation("ProjectOwner")
+
+  @@index([organizationId])
+  @@map("users")
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  name           String
+  organizationId String
+  ownerId        String
+  status         String   @default("pending") // pending, processing, ready, failed
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner        User         @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  files          File[]
+  dashboards     Dashboard[]
+  analyses       Analysis[]
+
+  @@index([organizationId])
+  @@index([ownerId])
+  @@map("projects")
+}
+
+model File {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileSize     Int
+  mimeType     String
+  r2Key        String
+  r2Url        String
+  uploadStatus String   @default("pending") // pending, uploaded, processing, completed, failed
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  analysisResult AnalysisResult?
+
+  @@index([projectId])
+  @@map("files")
+}
+
+model Dashboard {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  style     String   // simple, ml, powerbi
+  url       String?  // URL to the dashboard (e.g. Lightdash, Evidence)
+  config    Json?    // Store specific config for the engine
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@map("dashboards")
+}
+
+model Analysis {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  analysisType String   // e.g. "correlation", "distribution"
+  status       String   @default("pending")
+  results      Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([projectId])
+  @@map("analyses")
+}
+
+model AnalysisResult {
+  id          String   @id @default(cuid())
+  fileId      String   @unique
+  file        File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  manifestUrl String?
+  parquetUrl  String?
+  stats       Json?
+  createdAt   DateTime @default(now())
+
+  @@map("analysis_results")
+}
