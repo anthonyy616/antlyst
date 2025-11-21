@@ -59,7 +59,7 @@ export default function Home() {
                 <div className="flex items-center gap-4">
                     <ModeToggle />
                     {userId ? (
-                        <Link href="/org-selection">
+                        <Link href="/projects">
                             <Button className="bg-brand-purple hover:bg-brand-purple/90 text-white">Dashboard</Button>
                         </Link>
                     ) : (
@@ -97,7 +97,7 @@ export default function Home() {
                         transition={{ duration: 0.5, delay: 0.2 }}
                         className="flex flex-col sm:flex-row gap-4"
                     >
-                        <Link href={userId ? "/org-selection" : "/sign-up"}>
+                        <Link href={userId ? "/projects" : "/sign-up"}>
                             <Button size="lg" className="bg-brand-purple hover:bg-brand-purple/90 text-white h-12 px-8 text-lg">
                                 Get Started <ArrowRight className="ml-2 w-5 h-5" />
                             </Button>
@@ -208,7 +208,7 @@ export default function Home() {
                             {/* CTA */}
                             <div className="pt-8 text-center">
                                 <h3 className="text-2xl font-bold mb-6">Sign up to get started.</h3>
-                                <Link href={userId ? "/org-selection" : "/sign-up"}>
+                                <Link href={userId ? "/projects" : "/sign-up"}>
                                     <Button size="lg" className="bg-brand-purple hover:bg-brand-purple/90 text-white px-8">
                                         Create Your Account
                                     </Button>
