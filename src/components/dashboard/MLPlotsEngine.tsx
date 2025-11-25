@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 interface MLPlotsEngineProps {
-    analysisResult: any;
+    analysisResult?: any;
+    projectId?: string;
 }
 
 export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
