@@ -5,6 +5,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera, Float, Trail } from "@react-three/drei";
 import * as THREE from "three";
 
+import { useTheme } from "next-themes";
+
 // -----------------------------------------------------------------------------
 // Constants & Configuration
 // -----------------------------------------------------------------------------
@@ -13,7 +15,7 @@ const CONNECTOR_COUNT = 150; // Fewer particles for connections to keep performa
 const CONNECTION_DISTANCE = 3.5;
 const ORB_COUNT = 4;
 
-const COLORS = {
+const DARK_COLORS = {
     background: "#050505",
     particle: "#88ccff",
     connector: "#ff00aa",
@@ -21,10 +23,18 @@ const COLORS = {
     orb: ["#00ffff", "#ff00ff", "#8800ff", "#ff0088"],
 };
 
+const LIGHT_COLORS = {
+    background: "#ffffff",
+    particle: "#0066cc", // Darker blue for visibility on white
+    connector: "#cc0088", // Darker pink
+    line: "#8800cc", // Darker purple
+    orb: ["#00cccc", "#cc00cc", "#6600cc", "#cc0066"], // Slightly darker orbs
+};
+
 // -----------------------------------------------------------------------------
 // Component: Particle Field (Background Dust)
 // -----------------------------------------------------------------------------
-const ParticleField = () => {
+const ParticleField = ({ colors }: { colors: typeof DARK_COLORS }) => {
     const mesh = useRef<THREE.Points>(null!);
 
     // Generate random positions for thousands of particles
@@ -61,7 +71,7 @@ const ParticleField = () => {
             </bufferGeometry>
             <pointsMaterial
                 size={0.05}
-                color={COLORS.particle}
+                color={colors.particle}
                 transparent
                 opacity={0.6}
                 sizeAttenuation={true}
@@ -74,7 +84,7 @@ const ParticleField = () => {
 // -----------------------------------------------------------------------------
 // Component: Connected Particles (Foreground Network)
 // -----------------------------------------------------------------------------
-const ConnectedParticles = () => {
+const ConnectedParticles = ({ colors }: { colors: typeof DARK_COLORS }) => {
     const [positions] = useState(() => new Float32Array(CONNECTOR_COUNT * 3));
     const [velocities] = useState(() => {
         const v = new Float32Array(CONNECTOR_COUNT * 3);
@@ -124,7 +134,7 @@ const ConnectedParticles = () => {
         // Re-use temp objects to avoid GC
         const p1 = new THREE.Vector3();
         const p2 = new THREE.Vector3();
-        const color = new THREE.Color(COLORS.line);
+        const color = new THREE.Color(colors.line);
 
         for (let i = 0; i < CONNECTOR_COUNT; i++) {
             p1.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
@@ -169,7 +179,7 @@ const ConnectedParticles = () => {
                 </bufferGeometry>
                 <pointsMaterial
                     size={0.15}
-                    color={COLORS.connector}
+                    color={colors.connector}
                     transparent
                     opacity={0.8}
                     blending={THREE.AdditiveBlending}
@@ -180,7 +190,7 @@ const ConnectedParticles = () => {
             <lineSegments ref={linesRef}>
                 <bufferGeometry />
                 <lineBasicMaterial
-                    color={COLORS.line}
+                    color={colors.line}
                     transparent
                     opacity={0.15}
                     blending={THREE.AdditiveBlending}
@@ -194,10 +204,10 @@ const ConnectedParticles = () => {
 // -----------------------------------------------------------------------------
 // Component: Floating Orbs with Trails
 // -----------------------------------------------------------------------------
-const FloatingOrbs = () => {
+const FloatingOrbs = ({ colors }: { colors: typeof DARK_COLORS }) => {
     return (
         <group>
-            {COLORS.orb.map((color, i) => (
+            {colors.orb.map((color, i) => (
                 <Float
                     key={i}
                     speed={1.5}
@@ -242,9 +252,7 @@ const FloatingOrbs = () => {
         </group>
     );
 };
-// -----------------------------------------------------------------------------
-// Component: Mouse Parallax Control
-// -----------------------------------------------------------------------------
+
 // -----------------------------------------------------------------------------
 // Component: Automatic Camera Movement (Fly-through effect)
 // -----------------------------------------------------------------------------
@@ -273,6 +281,18 @@ const AutoCameraRig = () => {
 // Main Component: ParticleBackground
 // -----------------------------------------------------------------------------
 export default function ParticleBackground() {
+    const { resolvedTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
+    // Wait for mount to avoid hydration mismatch
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return null;
+
+    const colors = resolvedTheme === "light" ? LIGHT_COLORS : DARK_COLORS;
+
     return (
         <div
             style={{
@@ -282,8 +302,9 @@ export default function ParticleBackground() {
                 width: '100vw',
                 height: '100vh',
                 zIndex: -10,
-                background: COLORS.background,
+                background: colors.background,
                 pointerEvents: 'none', // Allow clicks to pass through to page content
+                transition: 'background 0.5s ease-in-out', // Smooth transition
             }}
         >
             <Canvas
@@ -291,16 +312,16 @@ export default function ParticleBackground() {
                 dpr={[1, 2]} // Handle high-DPI screens
                 gl={{ antialias: true, alpha: false }}
             >
-                <color attach="background" args={[COLORS.background]} />
+                <color attach="background" args={[colors.background]} />
 
                 {/* Scene Lighting */}
                 <ambientLight intensity={0.5} />
                 <pointLight position={[10, 10, 10]} intensity={1} />
 
                 {/* Components */}
-                <ParticleField />
-                <ConnectedParticles />
-                <FloatingOrbs />
+                <ParticleField colors={colors} />
+                <ConnectedParticles colors={colors} />
+                <FloatingOrbs colors={colors} />
 
                 {/* Effects */}
                 <AutoCameraRig />
