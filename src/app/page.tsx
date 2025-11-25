@@ -12,36 +12,8 @@ export default function Home() {
     const { userId } = useAuth();
 
     return (
-        <div className="min-h-screen bg-background flex flex-col overflow-hidden relative">
-            {/* Animated Background Elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <motion.div
-                    animate={{
-                        x: [0, 100, 0],
-                        y: [0, 50, 0],
-                        scale: [1, 1.2, 1],
-                    }}
-                    transition={{
-                        duration: 20,
-                        repeat: Infinity,
-                        ease: "linear"
-                    }}
-                    className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-brand-purple/10 rounded-full blur-3xl"
-                />
-                <motion.div
-                    animate={{
-                        x: [0, -100, 0],
-                        y: [0, -50, 0],
-                        scale: [1, 1.1, 1],
-                    }}
-                    transition={{
-                        duration: 25,
-                        repeat: Infinity,
-                        ease: "linear"
-                    }}
-                    className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-brand-blue/10 rounded-full blur-3xl"
-                />
-            </div>
+        <div className="min-h-screen bg-transparent flex flex-col overflow-hidden relative">
+            {/* Animated Background Elements - Removed to show ParticleBackground */}
 
 
 
@@ -118,10 +90,10 @@ export default function Home() {
                         <div className="relative bg-card border rounded-xl shadow-2xl overflow-hidden transform transition-transform duration-500 hover:rotate-x-12 hover:scale-105">
                             <div className="relative h-[400px] w-[800px] bg-slate-50 dark:bg-slate-900">
                                 <Image
-                                    src="/dashboard-preview.png"
+                                    src="/dashboard-mockup.jpg"
                                     alt="Antlyst Dashboard Preview"
                                     fill
-                                    className="object-cover"
+                                    className="object-contain"
                                     priority
                                 />
                             </div>
@@ -206,14 +178,16 @@ export default function Home() {
                             </div>
 
                             {/* CTA */}
-                            <div className="pt-8 text-center">
-                                <h3 className="text-2xl font-bold mb-6">Sign up to get started.</h3>
-                                <Link href={userId ? "/projects" : "/sign-up"}>
-                                    <Button size="lg" className="bg-brand-purple hover:bg-brand-purple/90 text-white px-8">
-                                        Create Your Account
-                                    </Button>
-                                </Link>
-                            </div>
+                            {!userId && (
+                                <div className="pt-8 text-center">
+                                    <h3 className="text-2xl font-bold mb-6">Sign up to get started.</h3>
+                                    <Link href="/sign-up">
+                                        <Button size="lg" className="bg-brand-purple hover:bg-brand-purple/90 text-white px-8">
+                                            Create Your Account
+                                        </Button>
+                                    </Link>
+                                </div>
+                            )}
 
                         </div>
                     </div>
