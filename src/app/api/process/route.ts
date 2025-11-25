@@ -9,6 +9,34 @@ const processSchema = z.object({
     fileId: z.string(),
 });
 
+// Helper to convert bigint to number/string for JSON serialization
+function sanitizeForJSON(obj: any): any {
+    if (obj === null || obj === undefined) {
+        return obj;
+    }
+
+    if (typeof obj === 'bigint') {
+        // Convert bigint to number if it's safe, otherwise to string
+        return obj <= Number.MAX_SAFE_INTEGER && obj >= Number.MIN_SAFE_INTEGER
+            ? Number(obj)
+            : obj.toString();
+    }
+
+    if (Array.isArray(obj)) {
+        return obj.map(item => sanitizeForJSON(item));
+    }
+
+    if (typeof obj === 'object') {
+        const sanitized: any = {};
+        for (const key in obj) {
+            sanitized[key] = sanitizeForJSON(obj[key]);
+        }
+        return sanitized;
+    }
+
+    return obj;
+}
+
 export async function POST(request: NextRequest) {
     try {
         const { userId, orgId } = await auth();
@@ -89,12 +117,12 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const manifest = {
+        const manifest = sanitizeForJSON({
             rowCount,
             columns: columnMetadata,
             correlations,
             generatedAt: new Date().toISOString(),
-        };
+        });
 
         // Save Parquet to R2
         const parquetKey = file.r2Key.replace('.csv', '.parquet');

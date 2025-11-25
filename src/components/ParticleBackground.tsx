@@ -64,9 +64,7 @@ const ParticleField = ({ colors }: { colors: typeof DARK_COLORS }) => {
             <bufferGeometry>
                 <bufferAttribute
                     attach="attributes-position"
-                    count={particles.length / 3}
-                    array={particles}
-                    itemSize={3}
+                    args={[particles, 3]}
                 />
             </bufferGeometry>
             <pointsMaterial
@@ -172,9 +170,7 @@ const ConnectedParticles = ({ colors }: { colors: typeof DARK_COLORS }) => {
                 <bufferGeometry>
                     <bufferAttribute
                         attach="attributes-position"
-                        count={CONNECTOR_COUNT}
-                        array={positions}
-                        itemSize={3}
+                        args={[positions, 3]}
                     />
                 </bufferGeometry>
                 <pointsMaterial

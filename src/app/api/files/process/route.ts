@@ -16,6 +16,34 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
     });
 }
 
+// Helper to convert bigint to number/string for JSON serialization
+function sanitizeForJSON(obj: any): any {
+    if (obj === null || obj === undefined) {
+        return obj;
+    }
+
+    if (typeof obj === 'bigint') {
+        // Convert bigint to number if it's safe, otherwise to string
+        return obj <= Number.MAX_SAFE_INTEGER && obj >= Number.MIN_SAFE_INTEGER
+            ? Number(obj)
+            : obj.toString();
+    }
+
+    if (Array.isArray(obj)) {
+        return obj.map(item => sanitizeForJSON(item));
+    }
+
+    if (typeof obj === 'object') {
+        const sanitized: any = {};
+        for (const key in obj) {
+            sanitized[key] = sanitizeForJSON(obj[key]);
+        }
+        return sanitized;
+    }
+
+    return obj;
+}
+
 export async function POST(req: NextRequest) {
     try {
         const { userId } = await auth();
@@ -73,17 +101,20 @@ export async function POST(req: NextRequest) {
         const preview = df.head(1000).toRecords();
         const schema = df.schema;
 
+        // Sanitize all data to remove bigint values
+        const sanitizedStats = sanitizeForJSON({
+            rowCount: df.height,
+            columns: Object.keys(schema),
+            schema: schema,
+            preview: preview,
+            summary: stats
+        });
+
         // Save results
         await prisma.analysisResult.create({
             data: {
                 fileId: fileId,
-                stats: {
-                    rowCount: df.height,
-                    columns: Object.keys(schema),
-                    schema: schema,
-                    preview: preview,
-                    summary: stats
-                },
+                stats: sanitizedStats,
             },
         });
 
