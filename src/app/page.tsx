@@ -7,6 +7,7 @@ import { ModeToggle } from '@/components/mode-toggle';
 import { ArrowRight, BarChart3, LineChart, PieChart, Sparkles, Zap, Users, Brain } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@clerk/nextjs';
+import HeroSlideshow from '@/components/HeroSlideshow';
 
 export default function Home() {
     const { userId } = useAuth();
@@ -88,14 +89,8 @@ export default function Home() {
                     >
                         <div className="absolute -inset-1 bg-gradient-to-r from-brand-purple to-brand-blue rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
                         <div className="relative bg-card border rounded-xl shadow-2xl overflow-hidden transform transition-transform duration-500 hover:rotate-x-12 hover:scale-105">
-                            <div className="relative h-[400px] w-[800px] bg-slate-50 dark:bg-slate-900">
-                                <Image
-                                    src="/dashboard-mockup.jpg"
-                                    alt="Antlyst Dashboard Preview"
-                                    fill
-                                    className="object-contain"
-                                    priority
-                                />
+                            <div className="relative h-[400px] w-full md:w-[800px] bg-slate-50 dark:bg-slate-900">
+                                <HeroSlideshow />
                             </div>
                         </div>
                     </motion.div>

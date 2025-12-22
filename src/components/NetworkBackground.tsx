@@ -43,6 +43,26 @@ const CONFIG = {
         connectionGlow: "rgba(147, 51, 234, 0.08)",
     },
 
+    // Visual Configuration - Neon Night
+    NEON_NIGHT_COLORS: {
+        background: "#0c0512",           // Very dark purple/black
+        backgroundNodes: "#d946ef",      // Fuchsia
+        foregroundNodes: "#06b6d4",      // Cyan
+        connections: "#c026d3",          // Fuchsia
+        nodeGlow: "rgba(217, 70, 239, 0.5)",
+        connectionGlow: "rgba(6, 182, 212, 0.25)",
+    },
+
+    // Visual Configuration - Corporate Blue
+    CORPORATE_BLUE_COLORS: {
+        background: "#f0f4f8",           // Alice Blue-ish
+        backgroundNodes: "#2563eb",      // Royal Blue
+        foregroundNodes: "#1e40af",      // Dark Blue
+        connections: "#3b82f6",          // Blue
+        nodeGlow: "rgba(37, 99, 235, 0.3)",
+        connectionGlow: "rgba(59, 130, 246, 0.15)",
+    },
+
     // Performance
     TARGET_FPS: 60,
     REDUCED_MOTION_SPEED: 0.02,     // Minimal drift when prefers-reduced-motion is enabled
@@ -109,6 +129,8 @@ export default function NetworkBackground() {
 
     // Get current color scheme
     const colors: ColorScheme = useMemo(() => {
+        if (resolvedTheme === "neon-night") return CONFIG.NEON_NIGHT_COLORS;
+        if (resolvedTheme === "corporate-blue") return CONFIG.CORPORATE_BLUE_COLORS;
         return resolvedTheme === "light" ? CONFIG.LIGHT_COLORS : CONFIG.DARK_COLORS;
     }, [resolvedTheme]);
 

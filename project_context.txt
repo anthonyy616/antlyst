@@ -1,7 +1,7 @@
 # Project Context: Antlyst.xyz
 
 **Last Updated:** 2025-12-22
-**Current Phase:** Phase 1 (Setup & Context) - Completed
+**Current Phase:** Phase 2 (Visual & Animation Overhaul) - Completed
 
 ## 1. Project Overview
 **Antlyst.xyz** is a web application allowing users to upload CSV files for interactive analysis, visualization, and collaborative sharing. It aims to provide "Data Visualization Reimagined" by automatically generating three distinct dashboard styles (Simple, ML-Enhanced, Power BI Style) from a single upload.
@@ -52,10 +52,10 @@
 - [x] Create `project_context.txt`.
 - [x] Confirm tech stack and current state.
 
-### Phase 2: Visual & Animation Overhaul (Current)
-- [ ] **Theme System:** Extend `tailwind.config.ts` and `globals.css` for multiple themes (class-based).
-- [ ] **Hero Slideshow:** Implement `HeroSlideshow.tsx` with Framer Motion.
-- [ ] **Global Polish:** Update `NetworkBackground` to respect new themes, add glassmorphism utilities.
+### Phase 2: Visual & Animation Overhaul (Completed)
+- [x] **Theme System:** Extend `tailwind.config.ts` and `globals.css` for multiple themes (class-based).
+- [x] **Hero Slideshow:** Implement `HeroSlideshow.tsx` with Framer Motion.
+- [x] **Global Polish:** Update `NetworkBackground` to respect new themes, add glassmorphism utilities.
 
 ### Phase 3: CSV Handling & Plot Selection UI
 - [ ] Fix CSV parsing (use `papaparse` or similar on worker/server).
