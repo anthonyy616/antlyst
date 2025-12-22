@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs'
 import { ThemeProvider } from "@/components/theme-provider"
-import ParticleBackground from "@/components/ParticleBackground";
+import NetworkBackground from "@/components/NetworkBackground";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,7 +27,7 @@ export default function RootLayout({
                         enableSystem
                         disableTransitionOnChange
                     >
-                        <ParticleBackground />
+                        <NetworkBackground />
                         {children}
                     </ThemeProvider>
                 </body>

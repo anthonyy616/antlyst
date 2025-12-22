@@ -1,0 +1,21 @@
+User uploads CSV
+       │
+       ▼
+Direct to Cloudflare R2 (signed URL)
+       │
+       ▼
+Backend records file metadata in Neon/Supabase
+       │
+       ▼
+User chooses one of three “Engines” when creating a dashboard
+       │                         │                              │
+       ▼                         ▼                              ▼
+Simple Engine           ML Plots Engine              Power BI Style Engine
+Lightdash project       Custom Plotly Dash app       Evidence.dev site
+(self-hosted)           (Python in Vercel function)   (SSG + custom theme)
+       │                         │                              │
+       └─────────────> All three output a URL or iframe <────────────┘
+                              │
+                              ▼
+User sees dropdown: “Change style → Simple | ML Plots | Power BI Look”
+Click → we generate the same analysis in the new engine → new URL
