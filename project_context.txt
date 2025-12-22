@@ -1,0 +1,92 @@
+# Project Context: Antlyst.xyz
+
+**Last Updated:** 2025-12-22
+**Current Phase:** Phase 1 (Setup & Context) - Completed
+
+## 1. Project Overview
+**Antlyst.xyz** is a web application allowing users to upload CSV files for interactive analysis, visualization, and collaborative sharing. It aims to provide "Data Visualization Reimagined" by automatically generating three distinct dashboard styles (Simple, ML-Enhanced, Power BI Style) from a single upload.
+
+## 2. Technology Stack
+- **Frontend:** Next.js (App Router), React, Tailwind CSS, Framer Motion.
+- **Backend:** Next.js API Routes, Server Actions.
+- **Database:** PostgreSQL (via Prisma ORM), likely hosting on Neon or Supabase.
+- **Storage:** Cloudflare R2 (for CSV files).
+- **Authentication:** Clerk.
+- **Visualization:** Recharts, Plotly.js, React Three Fiber (potential).
+- **Language:** TypeScript.
+
+## 3. Original Features (Audit Results)
+- **Landing Page:** Animated hero section, feature breakdown (3 engines), call to action.
+- **Authentication:** Clerk integration (Sign In, Sign Up).
+- **Database Model:**
+    - `Organization`: Supports teams.
+    - `User`: Linked to organizations.
+    - `Project`: Contains files and dashboards.
+    - `File`: Metadata for uploaded CSVs.
+    - `Dashboard`: Config for different visualization engines.
+    - `Analysis`: Stores analysis results.
+- **UI Components:** `NetworkBackground` (canvas-based particle animation), Theme Toggle (Light/Dark).
+
+## 4. New Requirements (Enhancement Plan)
+
+### Visual Design
+- [ ] **Slideshow Hero:** Replace static image with high-quality, auto-cycling slideshow (fade/slide, 8-10s).
+- [ ] **Rich Aesthetics:** "Premium" feel, glassmorphism, dynamic animations, no generic colors.
+- [ ] **Multi-Theme Support:** Light, Dark, + 2-3 new color schemes (e.g., "Neon Night", "Corporate Blue").
+- [ ] **Micro-animations:** Hover effects, card entrances, loading states.
+
+### Core Functionality
+- [ ] **Robust CSV Parsing:** Fix bugs with large files (100k+ rows).
+- [ ] **Plot Selection:** Clean UI to choose plotting style (Simple, ML, PBI-like).
+- [ ] **Backend Generation:** Python/Node generation logic for selected styles.
+- [ ] **AI Insights:** Toggle for "AI-Powered Insights" (trends, anomalies, actions).
+
+### Collaboration ("Organizations")
+- [ ] **Real-time Feed:** Share plots, threaded comments, reactions.
+- [ ] **Permissions:** Control sharing and viewing rights.
+
+## 5. Phased Implementation Plan
+
+### Phase 1: Setup & Context (Completed)
+- [x] Audit codebase.
+- [x] Create `project_context.txt`.
+- [x] Confirm tech stack and current state.
+
+### Phase 2: Visual & Animation Overhaul (Current)
+- [ ] **Theme System:** Extend `tailwind.config.ts` and `globals.css` for multiple themes (class-based).
+- [ ] **Hero Slideshow:** Implement `HeroSlideshow.tsx` with Framer Motion.
+- [ ] **Global Polish:** Update `NetworkBackground` to respect new themes, add glassmorphism utilities.
+
+### Phase 3: CSV Handling & Plot Selection UI
+- [ ] Fix CSV parsing (use `papaparse` or similar on worker/server).
+- [ ] Create `PlotStyleSelector` component.
+- [ ] Update file upload flow.
+
+### Phase 4: Plot Generation Backend
+- [ ] API routes for generating plot data/config based on engine selection.
+- [ ] Integrate specific libraries (Plotly, etc.) for each engine.
+
+### Phase 5: Authentication & Organizations Basics
+- [ ] Ensure Clerk auth is fully functional.
+- [ ] Implement Organization creation/invite flow (leveraging existing Schema).
+
+### Phase 6: Collaboration Features
+- [ ] WebSockets/Polling for real-time feed.
+- [ ] Comment/Reaction system database implementation.
+- [ ] Frontend for feed.
+
+### Phase 7: AI Insights System
+- [ ] Integration with LLM API (OpenAI/Gemini).
+- [ ] Context-aware prompt engineering for data insights.
+- [ ] UI for displaying insights.
+
+### Phase 8: Performance & Security
+- [ ] Optimization (caching, lazy loading).
+- [ ] Security audit (RLS, validation).
+
+### Phase 9: Final Polish
+- [ ] End-to-end testing.
+- [ ] User acceptance walkthrough.
+
+## 6. Project Log
+- **2025-12-22:** Phase 1 initiated. Audited `schema.prisma` and `page.tsx`. Created this context file. Moving to Phase 2.
