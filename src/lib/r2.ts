@@ -48,6 +48,12 @@ export async function getObjectBuffer(key: string): Promise<Buffer> {
   return streamToBuffer(response.Body as Readable);
 }
 
+// Get object from R2 as string
+export async function getFileContent(key: string): Promise<string> {
+  const buffer = await getObjectBuffer(key);
+  return buffer.toString('utf-8');
+}
+
 // Upload object to R2
 export async function uploadObject(
   key: string,

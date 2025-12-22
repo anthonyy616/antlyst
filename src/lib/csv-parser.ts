@@ -28,7 +28,7 @@ export interface ParseOptions {
  */
 export const parseCSV = (file: File, options: ParseOptions = {}): Promise<CSVParseResult> => {
     return new Promise((resolve, reject) => {
-        Papa.parse(file, {
+        Papa.parse(file as any, {
             header: true,
             skipEmptyLines: true,
             worker: options.worker ?? true, // Default to worker for performance

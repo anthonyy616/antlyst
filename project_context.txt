@@ -1,7 +1,7 @@
 # Project Context: Antlyst.xyz
 
 **Last Updated:** 2025-12-23
-**Current Phase:** Phase 3 (CSV Handling & Plot Selection UI) - In Progress
+**Current Phase:** Phase 4 (Plot Generation Backend) - In Progress
 
 ## 1. Project Overview
 **Antlyst.xyz** is a web application allowing users to upload CSV files for interactive analysis, visualization, and collaborative sharing. It aims to provide "Data Visualization Reimagined" by automatically generating three distinct dashboard styles (Simple, ML-Enhanced, Power BI Style) from a single upload.
@@ -57,12 +57,12 @@
 - [x] **Hero Slideshow:** Implement `HeroSlideshow.tsx` with Framer Motion.
 - [x] **Global Polish:** Update `NetworkBackground` to respect new themes, add glassmorphism utilities.
 
-### Phase 3: CSV Handling & Plot Selection UI
-- [ ] Fix CSV parsing (use `papaparse` or similar on worker/server).
-- [ ] Create `PlotStyleSelector` component.
-- [ ] Update file upload flow.
+### Phase 3: CSV Handling & Plot Selection UI (Completed)
+- [x] Fix CSV parsing (use `papaparse` or similar on worker/server).
+- [x] Create `PlotStyleSelector` component.
+- [x] Update file upload flow.
 
-### Phase 4: Plot Generation Backend
+### Phase 4: Plot Generation Backend (Current)
 - [ ] API routes for generating plot data/config based on engine selection.
 - [ ] Integrate specific libraries (Plotly, etc.) for each engine.
 
