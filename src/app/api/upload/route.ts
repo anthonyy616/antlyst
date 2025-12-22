@@ -10,6 +10,7 @@ const uploadSchema = z.object({
   fileSize: z.number().positive(),
   mimeType: z.string(),
   orgId: z.string(),
+  style: z.enum(['simple', 'ml', 'powerbi']).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { fileName, fileSize, mimeType, orgId } = validation.data;
+    const { fileName, fileSize, mimeType, orgId, style } = validation.data;
 
     // Security: verify user has access to this org
     if (orgId !== userOrgId) {
@@ -46,6 +47,17 @@ export async function POST(request: NextRequest) {
         status: 'pending',
       },
     });
+
+    // Create dashboard if style is provided
+    if (style) {
+      await prisma.dashboard.create({
+        data: {
+          projectId: project.id,
+          style: style,
+          config: {},
+        }
+      });
+    }
 
     // Generate unique R2 key
     const r2Key = generateR2Key(orgId, project.id, fileName);
