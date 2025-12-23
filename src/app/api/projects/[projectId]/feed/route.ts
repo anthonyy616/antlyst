@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth, checkOrgAccess } from '@/lib/auth';
+import { z } from 'zod';
 
 export async function GET(
     request: NextRequest,
@@ -58,9 +59,18 @@ export async function POST(
     const { userId, orgId } = await requireAuth();
 
     const body = await request.json();
-    const { content } = body;
 
-    if (!content) return NextResponse.json({ error: "Content required" }, { status: 400 });
+    // Zod Validation
+    const schema = z.object({
+        content: z.string().min(1, "Content is required").max(1000, "Content too long")
+    });
+
+    const validation = schema.safeParse(body);
+    if (!validation.success) {
+        return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
+    }
+
+    const { content } = validation.data;
 
     const project = await prisma.project.findUnique({
         where: { id: projectId },

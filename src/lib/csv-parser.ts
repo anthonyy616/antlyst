@@ -27,12 +27,15 @@ export interface ParseOptions {
  * For large files, it uses a web worker to avoid blocking the main thread.
  */
 export const parseCSV = (file: File, options: ParseOptions = {}): Promise<CSVParseResult> => {
+    const { preview, worker, ...restOptions } = options;
+
     return new Promise((resolve, reject) => {
+        // @ts-ignore
         Papa.parse(file as any, {
             header: true,
             skipEmptyLines: true,
-            worker: options.worker ?? true, // Default to worker for performance
-            preview: options.preview ? 100 : 0, // Preview first 100 rows if requested
+            worker: worker ?? true, // Default to worker for performance
+            preview: preview ? 100 : 0, // Preview first 100 rows if requested
             complete: (results) => {
                 resolve({
                     data: results.data,
@@ -44,7 +47,7 @@ export const parseCSV = (file: File, options: ParseOptions = {}): Promise<CSVPar
             error: (error) => {
                 reject(error);
             },
-            ...options
+            ...restOptions
         });
     });
 };
