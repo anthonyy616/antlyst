@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { DashboardConfig } from '@/lib/analysis-engine';
 import { DashboardView } from '@/components/DashboardView';
+import { ProjectFeed } from '@/components/feed/ProjectFeed';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -62,5 +63,14 @@ export default function ProjectDashboardClient({ projectId }: ProjectDashboardCl
         return null; // Should not happen if loading is false and no error
     }
 
-    return <DashboardView config={config} />;
+    return (
+        <div className="flex h-[calc(100vh-65px)] overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-6">
+                <DashboardView config={config} />
+            </div>
+            <div className="w-[350px] border-l border-slate-200 bg-slate-50 h-full">
+                <ProjectFeed projectId={projectId} />
+            </div>
+        </div>
+    );
 }
