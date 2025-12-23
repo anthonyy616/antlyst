@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 
 // Dynamically import Plot for performance
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false, loading: () => <p>Loading chart...</p> });
+import { Sparkles, AlertTriangle, TrendingUp, Info } from 'lucide-react';
 
 interface DashboardViewProps {
     config: DashboardConfig;
@@ -55,6 +56,39 @@ export function DashboardView({ config }: DashboardViewProps) {
                     </motion.div>
                 ))}
             </div>
+
+            {/* AI Insights Section */}
+            {config.insights && config.insights.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{ delay: 0.2 }}
+                >
+                    <Card className="border-l-4 border-l-brand-purple bg-purple-50/50 dark:bg-purple-950/10">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <Sparkles className="h-5 w-5 text-brand-purple" />
+                                AI Analyst Insights
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {config.insights.map((insight, i) => (
+                                <div key={i} className="flex items-start gap-3 p-2 rounded-md hover:bg-white/50 dark:hover:bg-white/5 transition-colors">
+                                    <div className="mt-0.5">
+                                        {insight.type === 'outlier' && <AlertTriangle className="h-5 w-5 text-amber-500" />}
+                                        {insight.type === 'trend' && <TrendingUp className="h-5 w-5 text-green-500" />}
+                                        {insight.type === 'general' && <Info className="h-5 w-5 text-blue-500" />}
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-semibold">{insight.title}</h4>
+                                        <p className="text-sm text-muted-foreground">{insight.description}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            )}
 
             {/* Charts Section */}
             <div className={`grid gap-6 ${config.layout === 'powerbi' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2'}`}>

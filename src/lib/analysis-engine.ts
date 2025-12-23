@@ -15,6 +15,14 @@ export interface DashboardConfig {
         layout: any; // Plotly layout object
         gridPos?: { x: number; y: number; w: number; h: number }; // For PowerBI style grid
     }[];
+    insights?: Insight[];
+}
+
+export interface Insight {
+    type: 'outlier' | 'trend' | 'correlation' | 'general';
+    title: string;
+    description: string;
+    severity: 'info' | 'warning' | 'positive';
 }
 
 export async function generateDashboard(
@@ -24,16 +32,25 @@ export async function generateDashboard(
     // Load DataFrame
     const df = pl.readCSV(csvContent, { ignoreErrors: true });
 
+    const insights = generateInsights(df);
+
+    let config: DashboardConfig;
     switch (style) {
         case 'simple':
-            return generateSimpleDashboard(df);
+            config = generateSimpleDashboard(df);
+            break;
         case 'ml':
-            return generateMLDashboard(df);
+            config = generateMLDashboard(df);
+            break;
         case 'powerbi':
-            return generatePowerBIDashboard(df);
+            config = generatePowerBIDashboard(df);
+            break;
         default:
-            return generateSimpleDashboard(df);
+            config = generateSimpleDashboard(df);
     }
+
+    config.insights = insights;
+    return config;
 }
 
 function generateSimpleDashboard(df: pl.DataFrame): DashboardConfig {
@@ -214,4 +231,73 @@ function generatePowerBIDashboard(df: pl.DataFrame): DashboardConfig {
         kpis: simple.kpis,
         charts: enrichedCharts
     };
+}
+
+function generateInsights(df: pl.DataFrame): Insight[] {
+    const insights: Insight[] = [];
+    const numericCols = df.columns.filter(name => {
+        try {
+            const dtype = df.schema[name].toString();
+            return ['Float32', 'Float64', 'Int32', 'Int64'].some(t => dtype.includes(t));
+        } catch { return false; }
+    });
+
+    // 1. Detect Outliers (Values > 2 std dev from mean)
+    // Simplified: Check max vs mean
+    for (const col of numericCols) {
+        try {
+            const series = df.getColumn(col);
+            const mean = series.mean();
+            const std = ((series as any).std() || 0);
+            const max = series.max();
+            const min = series.min();
+
+            if (std > 0) {
+                const zScoreMax = (max - mean) / std;
+                if (zScoreMax > 3) {
+                    insights.push({
+                        type: 'outlier',
+                        title: `Extreme Value in ${col}`,
+                        description: `The maximum value (${max.toFixed(2)}) is significantly higher (> 3σ) than the average (${mean.toFixed(2)}).`,
+                        severity: 'warning'
+                    });
+                }
+            }
+        } catch (e) { }
+    }
+
+    // 2. Simple Trend Detection (Compare first half vs second half average)
+    for (const col of numericCols) {
+        try {
+            const series = df.getColumn(col);
+            if (series.length > 10) {
+                const half = Math.floor(series.length / 2);
+                const firstHalf = series.slice(0, half).mean();
+                const secondHalf = series.slice(half, series.length - half).mean();
+
+                const percentChange = ((secondHalf - firstHalf) / firstHalf) * 100;
+
+                if (Math.abs(percentChange) > 20) {
+                    insights.push({
+                        type: 'trend',
+                        title: `${percentChange > 0 ? 'Upward' : 'Downward'} Trend in ${col}`,
+                        description: `Values have ${percentChange > 0 ? 'increased' : 'decreased'} by approximately ${Math.abs(percentChange).toFixed(1)}% from the first half to the second half of the dataset.`,
+                        severity: percentChange > 0 ? 'positive' : 'info'
+                    });
+                }
+            }
+        } catch (e) { }
+    }
+
+    // Fallback if no insights
+    if (insights.length === 0) {
+        insights.push({
+            type: 'general',
+            title: 'Consistent Data',
+            description: 'No significant outliers or strong trends detected. The data appears stable.',
+            severity: 'info'
+        });
+    }
+
+    return insights.slice(0, 5); // Limit to top 5
 }
