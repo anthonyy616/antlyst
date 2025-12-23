@@ -7,19 +7,19 @@ import Image from "next/image";
 const IMAGES = [
     {
         src: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2670&auto=format&fit=crop",
-        alt: "Data visualization abstract",
+        alt: "Interactive Financial Dashboard",
     },
     {
-        src: "https://images.unsplash.com/photo-1504868584819-f8e8b71663ef?q=80&w=2670&auto=format&fit=crop",
-        alt: "Futuristic technology",
+        src: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2670&auto=format&fit=crop",
+        alt: "Team analyzing business metrics",
     },
     {
         src: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2426&auto=format&fit=crop",
-        alt: "Network connections",
+        alt: "Digital growth charts",
     },
     {
-        src: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2670&auto=format&fit=crop",
-        alt: "Code and data analysis",
+        src: "https://images.unsplash.com/photo-1599658880436-e252446958d5?q=80&w=2670&auto=format&fit=crop",
+        alt: "Modern analytics interface",
     }
 ];
 
