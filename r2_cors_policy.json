@@ -1,0 +1,23 @@
+[
+    {
+        "AllowedOrigins": [
+            "https://antlyst.xyz",
+            "https://www.antlyst.xyz",
+            "http://localhost:3000"
+        ],
+        "AllowedMethods": [
+            "PUT",
+            "GET",
+            "POST",
+            "HEAD",
+            "DELETE"
+        ],
+        "AllowedHeaders": [
+            "*"
+        ],
+        "ExposeHeaders": [
+            "ETag"
+        ],
+        "MaxAgeSeconds": 3600
+    }
+]
