@@ -1,7 +1,7 @@
 # Project Context: Antlyst.xyz
 
 **Last Updated:** 2025-12-23
-**Current Phase:** Phase 4 (Plot Generation Backend) - In Progress
+**Current Phase:** Phase 5 (Authentication & Organizations Basics) - In Progress
 
 ## 1. Project Overview
 **Antlyst.xyz** is a web application allowing users to upload CSV files for interactive analysis, visualization, and collaborative sharing. It aims to provide "Data Visualization Reimagined" by automatically generating three distinct dashboard styles (Simple, ML-Enhanced, Power BI Style) from a single upload.
@@ -62,11 +62,11 @@
 - [x] Create `PlotStyleSelector` component.
 - [x] Update file upload flow.
 
-### Phase 4: Plot Generation Backend (Current)
-- [ ] API routes for generating plot data/config based on engine selection.
-- [ ] Integrate specific libraries (Plotly, etc.) for each engine.
+### Phase 4: Plot Generation Backend (Completed)
+- [x] API routes for generating plot data/config based on engine selection.
+- [x] Integrate specific libraries (Plotly, etc.) for each engine.
 
-### Phase 5: Authentication & Organizations Basics
+### Phase 5: Authentication & Organizations Basics (Current)
 - [ ] Ensure Clerk auth is fully functional.
 - [ ] Implement Organization creation/invite flow (leveraging existing Schema).
 
