@@ -1,7 +1,8 @@
 "use client";
 
 import useSWR from 'swr';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { FeedPost } from './FeedPost';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -10,11 +11,31 @@ import { Loader2, Send } from 'lucide-react';
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export function ProjectFeed({ projectId }: { projectId: string }) {
-    const { data: posts, error, mutate } = useSWR(`/api/projects/${projectId}/feed`, fetcher, {
-        refreshInterval: 5000 // Poll every 5s
-    });
+    const { data: posts, error, mutate } = useSWR(`/api/projects/${projectId}/feed`, fetcher); // Removed polling
     const [content, setContent] = useState("");
     const [submitting, setSubmitting] = useState(false);
+
+    // Real-time Subscription
+    useEffect(() => {
+        const channel = supabase.channel(`project-${projectId}`)
+            .on(
+                'broadcast',
+                { event: 'new-post' },
+                (payload) => {
+                    // Update SWR cache instantly
+                    mutate((currentPosts: any) => {
+                        // Dedup based on ID just in case
+                        if (currentPosts?.find((p: any) => p.id === payload.payload.id)) return currentPosts;
+                        return [payload.payload, ...(currentPosts || [])];
+                    }, false);
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [projectId, mutate]);
 
     const handleSubmit = async () => {
         if (!content.trim()) return;
@@ -26,7 +47,9 @@ export function ProjectFeed({ projectId }: { projectId: string }) {
                 body: JSON.stringify({ content })
             });
             setContent("");
-            mutate(); // Refresh list immediately
+            // No need to mutate() here if the broadcast works, 
+            // but for instant local feedback we could optimistic update.
+            // Leaving it to the broadcast for now to prove it works.
         } catch (e) {
             console.error("Failed to post", e);
         } finally {

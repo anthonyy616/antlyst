@@ -94,5 +94,23 @@ export async function POST(
         }
     });
 
+    // Broadcast to Supabase
+    try {
+        const { supabase } = await import('@/lib/supabase');
+        await supabase.channel(`project-${projectId}`).send({
+            type: 'broadcast',
+            event: 'new-post',
+            payload: {
+                ...post,
+                hasReacted: false,
+                reactionCount: 0,
+                commentCount: 0
+            }
+        });
+    } catch (error) {
+        console.error("Failed to broadcast real-time event:", error);
+        // Don't fail the request if RT fails
+    }
+
     return NextResponse.json(post);
 }

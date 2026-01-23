@@ -1,0 +1,29 @@
+# Project Audit & Gap Analysis
+
+## 1. Visual Design Overhaul
+- **Current Status**: "Stale" slideshow exists (simple cross-fade of Unsplash images). Themes (`neon-night`, `corporate-blue`) are present in `globals.css` and switcher.
+- **Gap**: Slideshow needs to be "modern, high-quality, professional" with text/overlays and better transitions (slide+fade).
+- **Fix**: Replace `HeroSlideshow.tsx` with a more complex `framer-motion` implementation (carousel behavior) and better assets.
+
+## 2. CSV Upload & Plotting
+- **Current Status**: 
+    - Frontend: `UploadWizard` previews first 100 rows, then uploads raw file to R2.
+    - Backend: `api/projects/[projectId]/dashboard` fetches **entire file** into memory (`getFileContent`) and processes it synchronously.
+- **Gap**: 
+    - "Fix existing bug where CSV files do not load fully". The synchronous full-load approach will fail/timeout on large files (100k+ rows).
+    - No streaming or chunked processing.
+- **Fix**: Implement robust backend parsing (possibly using `nodejs-polars` lazy frames or streaming) and async processing if needed.
+
+## 3. Real-Time Collaboration
+- **Current Status**: `ProjectFeed.tsx` uses **Polling** (SWR, 5s interval).
+- **Gap**: Requirement specifies "Real-time (use WebSockets, Firebase, Supabase)". Polling is not true real-time and inefficient.
+- **Fix**: Refactor `ProjectFeed` to use Supabase Realtime or a WebSocket server (e.g. `socket.io` with custom server, or Pusher).
+
+## 4. AI-Powered Insights
+- **Current Status**: `DashboardView` has UI for insights. Backend `analysis-engine` (pending check) likely has some logic.
+- **Gap**: Verify if "Context-aware, accurate" analysis is actually occurring or just simple heuristics.
+- **Fix**: Integrate a stronger LLM step or advanced statistical heuristics if current ones are too basic.
+
+## 5. Performance
+- **Current Status**: Client-side preview is limited. Backend is memory-heavy.
+- **Fix**: Optimization of `generateDashboard` and usage of Workers.

@@ -1,6 +1,7 @@
 import { UserButton, OrganizationSwitcher } from '@clerk/nextjs';
 import { requireAuth } from '@/lib/auth';
 import Link from 'next/link';
+import { InviteButton } from '@/components/InviteButton';
 
 export default async function DashboardLayout({
   children,
@@ -36,6 +37,7 @@ export default async function DashboardLayout({
             </nav>
           </div>
           <div className="flex items-center gap-4">
+            <InviteButton orgId={orgId} />
             <UserButton afterSignOutUrl="/" />
           </div>
         </div>

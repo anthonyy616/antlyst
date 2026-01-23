@@ -1,10 +1,11 @@
 # Project Context: Antlyst.xyz
 
 **Last Updated:** 2025-12-23
-**Current Phase:** Phase 9 (Final Polish) - In Progress
+**Current Phase:** Phase 1 (Audit & Plan) -> Moving to Phase 2
 
 ## 1. Project Overview
 **Antlyst.xyz** is a web application allowing users to upload CSV files for interactive analysis, visualization, and collaborative sharing. It aims to provide "Data Visualization Reimagined" by automatically generating three distinct dashboard styles (Simple, ML-Enhanced, Power BI Style) from a single upload.
+**Long-term Goal:** Develop an advanced AI algorithm capable of identifying hidden trends and "secret" insights in ANY dataset using trained models, making high-level data intelligence accessible to everyone.
 
 ## 2. Technology Stack
 - **Frontend:** Next.js (App Router), React, Tailwind CSS, Framer Motion.
@@ -42,8 +43,9 @@
 - [ ] **AI Insights:** Toggle for "AI-Powered Insights" (trends, anomalies, actions).
 
 ### Collaboration ("Organizations")
-- [ ] **Real-time Feed:** Share plots, threaded comments, reactions.
-- [ ] **Permissions:** Control sharing and viewing rights.
+- [ ] **Real-time Feed:** Share plots, threaded comments, reactions (Supabase Realtime).
+- [ ] **Custom Invites:** Shareable link system (e.g., `antlyst.xyz/invite/...`) that adds users to the underlying Clerk organization transparently.
+- [ ] **Custom Plots:** Automatic initial generation, with UI controls for users to manually swap X/Y axes or data columns.
 
 ## 5. Phased Implementation Plan
 
@@ -57,21 +59,21 @@
 - [x] **Hero Slideshow:** Implement `HeroSlideshow.tsx` with Framer Motion.
 - [x] **Global Polish:** Update `NetworkBackground` to respect new themes, add glassmorphism utilities.
 
-### Phase 3: CSV Handling & Plot Selection UI (Completed)
-- [x] Fix CSV parsing (use `papaparse` or similar on worker/server).
+### Phase 3: CSV Handling & Plot Selection UI (Refactoring)
 - [x] Create `PlotStyleSelector` component.
-- [x] Update file upload flow.
+- [x] Update file upload flow (Basic).
+- [ ] Fix CSV parsing (Large file support - currently memory bound).
 
-### Phase 4: Plot Generation Backend (Completed)
-- [x] API routes for generating plot data/config based on engine selection.
-- [x] Integrate specific libraries (Plotly, etc.) for each engine.
+### Phase 4: Plot Generation Backend (Refactoring)
+- [x] API routes for generating plot data/config.
+- [ ] Optimize `analysis-engine` for large datasets.
 
 ### Phase 5: Authentication & Organizations Basics (Completed)
 - [x] Ensure Clerk auth is fully functional.
 - [x] Implement Organization creation/invite flow (leveraging existing Schema).
 
-### Phase 6: Collaboration Features (Completed)
-- [x] WebSockets/Polling for real-time feed.
+### Phase 6: Collaboration Features (Refactoring)
+- [ ] **Real-time Feed:** Switch from Polling to WebSockets/Supabase Realtime.
 - [x] Comment/Reaction system database implementation.
 - [x] Frontend for feed.
 
@@ -83,9 +85,7 @@
 - [x] Optimization (Worker for CSV).
 - [x] Security audit (Zod validation, Headers).
 
-### Phase 9: Final Polish (Current)
-- [ ] End-to-end testing.
-- [ ] User acceptance walkthrough.
+### Phase 9: Final Polish
 
 ### Phase 9: Final Polish
 - [ ] End-to-end testing.

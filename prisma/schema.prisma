@@ -16,6 +16,7 @@ model Organization {
 
   users    User[]
   projects Project[]
+  invites  Invite[]
 
   @@map("organizations")
 }
@@ -168,4 +169,20 @@ model Reaction {
   @@index([postId])
   @@index([userId])
   @@map("reactions")
+}
+
+model Invite {
+  id             String       @id @default(cuid())
+  token          String       @unique // The unique code in the URL
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  creatorId      String       // User who created the invite
+  expiresAt      DateTime
+  maxUses        Int          @default(100)
+  uses           Int          @default(0)
+  isRevoked      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@map("invites")
 }

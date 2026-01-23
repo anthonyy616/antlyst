@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs'
 import { ThemeProvider } from "@/components/theme-provider"
-import NetworkBackground from "@/components/NetworkBackground";
+import { NeonOrbs } from "@/components/ui/neon-orbs";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,7 +27,7 @@ export default function RootLayout({
                         enableSystem
                         disableTransitionOnChange
                     >
-                        <NetworkBackground />
+                        <NeonOrbs />
                         {children}
                     </ThemeProvider>
                 </body>
