@@ -20,7 +20,7 @@ export default function EngineWrapper({ analysisResult }: EngineWrapperProps) {
         <div className="flex flex-col min-h-screen">
             {/* Engine Switcher Toolbar */}
             <div className="bg-white border-b p-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-                <h1 className="text-xl font-bold">Dashboard Engine</h1>
+                <h1 className="text-xl font-bold text-black">Dashboard</h1>
                 <div className="flex space-x-2">
                     <Button
                         variant={currentEngine === 'simple' ? 'default' : 'outline'}

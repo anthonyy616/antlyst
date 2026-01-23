@@ -1,20 +1,12 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-export function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  return twMerge(clsx(inputs))
 }
 
 export function generateR2Key(orgId: string, projectId: string, fileName: string): string {
-  const timestamp = Date.now();
-  const sanitized = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-  return `uploads/${orgId}/${projectId}/${timestamp}-${sanitized}`;
+  // Basic sanitization
+  const safeFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+  return `${orgId}/${projectId}/${Date.now()}-${safeFileName}`;
 }

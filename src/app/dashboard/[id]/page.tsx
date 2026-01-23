@@ -69,10 +69,12 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
                             <EngineWrapper analysisResult={analysisResult} />
                         )}
 
+                        {/* 
                         <div className="mt-8 pt-8 border-t">
                             <h3 className="text-lg font-semibold mb-4">Update Data</h3>
                             <FileUploader projectId={project.id} />
                         </div>
+                        */}
                     </>
                 )}
             </main>
