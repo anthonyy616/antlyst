@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider } from '@clerk/nextjs'
+import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
-import dynamic from 'next/dynamic';
-
-const NeonOrbs = dynamic(() => import("@/components/ui/neon-orbs").then(mod => mod.NeonOrbs), {
-    ssr: false
-});
+import NeonOrbsWrapper from "@/components/NeonOrbsWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,20 +18,18 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <ClerkProvider>
-            <html lang="en" suppressHydrationWarning>
-                <body className={inter.className}>
-                    <ThemeProvider
-                        attribute="class"
-                        defaultTheme="system"
-                        enableSystem
-                        disableTransitionOnChange
-                    >
-                        <NeonOrbs />
-                        {children}
-                    </ThemeProvider>
-                </body>
-            </html>
-        </ClerkProvider>
+        <html lang="en" suppressHydrationWarning>
+            <body className={inter.className}>
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    <NeonOrbsWrapper />
+                    {children}
+                </ThemeProvider>
+            </body>
+        </html>
     );
 }
