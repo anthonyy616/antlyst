@@ -3,7 +3,11 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs'
 import { ThemeProvider } from "@/components/theme-provider"
-import { NeonOrbs } from "@/components/ui/neon-orbs";
+import dynamic from 'next/dynamic';
+
+const NeonOrbs = dynamic(() => import("@/components/ui/neon-orbs").then(mod => mod.NeonOrbs), {
+    ssr: false
+});
 
 const inter = Inter({ subsets: ["latin"] });
 

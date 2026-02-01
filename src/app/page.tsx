@@ -7,7 +7,12 @@ import { ModeToggle } from '@/components/mode-toggle';
 import { ArrowRight, BarChart3, LineChart, PieChart, Sparkles, Zap, Users, Brain } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@clerk/nextjs';
-import HeroSlideshow from '@/components/HeroSlideshow';
+import dynamic from 'next/dynamic';
+
+const HeroSlideshow = dynamic(() => import('@/components/HeroSlideshow'), {
+    ssr: false,
+    loading: () => <div className="w-full h-full bg-slate-900 animate-pulse" />
+});
 
 export default function Home() {
     const { userId } = useAuth();

@@ -17,6 +17,7 @@ model Organization {
   users    User[]
   projects Project[]
   invites  Invite[]
+  jobs     Job[]
 
   @@map("organizations")
 }
@@ -36,6 +37,7 @@ model User {
   posts        Post[]
   comments     Comment[]
   reactions    Reaction[]
+  jobs         Job[]
 
   @@index([organizationId])
   @@map("users")
@@ -61,6 +63,8 @@ model Project {
 
   @@index([organizationId])
   @@index([ownerId])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, name])
   @@map("projects")
 }
 
@@ -94,6 +98,7 @@ model Dashboard {
   updatedAt DateTime @updatedAt
 
   @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
   @@map("dashboards")
 }
 
@@ -185,4 +190,27 @@ model Invite {
 
   @@index([organizationId])
   @@map("invites")
+}
+
+model Job {
+  id        String   @id @default(cuid())
+  type      String   // "csv_ingest", "plot_generation", "ai_insight"
+  status    String   @default("queued") // queued, running, done, failed
+  progress  Int      @default(0)
+  payload   Json?
+  result    Json?
+  error     String?
+  
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orgId     String?
+  org       Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([status])
+  @@map("jobs")
 }
