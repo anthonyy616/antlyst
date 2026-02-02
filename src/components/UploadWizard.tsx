@@ -34,8 +34,18 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
         try {
             // Client-side parse for preview metrics
             const result = await parseCSV(droppedFile, { preview: true, worker: true });
-            if (result.meta.aborted || result.errors.length > 0) {
+
+            if (result.meta.aborted) {
+                console.warn("CSV parse aborted");
+                alert("CSV parsing was aborted. Please check the file.");
+                setStep('idle');
+                return;
+            }
+
+            if (result.errors.length > 0) {
                 console.warn("CSV warnings:", result.errors);
+                // Continue if only warnings, but maybe alert if critical?
+                // For now just log.
             }
 
             // If total lines are easier to get, estimating or using what we have
@@ -48,9 +58,9 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
             // To get real count we'd need to parse all. Let's stick to simple preview flow.
 
             setStep('review');
-        } catch (error) {
-            console.error(error);
-            alert("Failed to parse CSV. Please ensure it's a valid CSV file.");
+        } catch (error: any) {
+            console.error("CSV Parse Error:", error);
+            alert(`Failed to parse CSV: ${error.message || "Unknown error"}. Please ensure it is a valid CSV file.`);
             setStep('idle');
             setFile(null);
         }
@@ -81,7 +91,7 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
                 body: JSON.stringify({
                     fileName: file.name,
                     fileSize: file.size,
-                    mimeType: file.type,
+                    mimeType: file.type || 'text/csv', // Fallback for Windows/Excel sometimes missing type
                     orgId,
                     style: selectedStyle, // Passing style to backend
                 }),
@@ -141,8 +151,8 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
                         <div
                             {...getRootProps()}
                             className={`cursor-pointer rounded-xl border-2 border-dashed p-16 text-center transition-all duration-200 ${isDragActive
-                                    ? 'border-brand-purple bg-brand-purple/5 scale-[1.01]'
-                                    : 'border-muted-foreground/30 hover:border-brand-purple/50 hover:bg-muted/30'
+                                ? 'border-brand-purple bg-brand-purple/5 scale-[1.01]'
+                                : 'border-muted-foreground/30 hover:border-brand-purple/50 hover:bg-muted/30'
                                 }`}
                         >
                             <input {...getInputProps()} />

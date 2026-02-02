@@ -84,3 +84,27 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Failed to fetch organizations" }, { status: 500 });
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const { userId } = await auth();
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const { organizationId } = body;
+
+        if (!organizationId) {
+            return NextResponse.json({ error: 'Missing organizationId' }, { status: 400 });
+        }
+
+        await OrgService.deleteOrganization(userId, organizationId);
+
+        return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        console.error("Delete Org Error:", error);
+        return NextResponse.json({ error: error.message || "Failed to delete organization" }, { status: 500 });
+    }
+}

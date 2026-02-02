@@ -244,7 +244,10 @@ export default function OrganizationPage() {
 
                                             {/* Manage Members Dialog */}
                                             {org.role === 'owner' && (
-                                                <ManageMembersDialog org={org} />
+                                                <div className="flex gap-2 mt-2">
+                                                    <ManageMembersDialog org={org} />
+                                                    <DeleteOrgDialog orgId={org.id} orgName={org.name} onDeleted={fetchOrgs} />
+                                                </div>
                                             )}
                                         </>
                                     )}
@@ -361,6 +364,74 @@ function ManageMembersDialog({ org }: { org: Org }) {
                             </div>
                         ))
                     )}
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function DeleteOrgDialog({ orgId, orgName, onDeleted }: { orgId: string, orgName: string, onDeleted: () => void }) {
+    const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [param, setParam] = useState('');
+
+    const handleDelete = async () => {
+        if (param !== 'DELETE') return;
+        setLoading(true);
+        try {
+            const res = await fetch('/api/org', {
+                method: 'DELETE',
+                body: JSON.stringify({ organizationId: orgId }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (res.ok) {
+                setOpen(false);
+                onDeleted();
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Failed to delete');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error deleting organization');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="w-full">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Delete Team
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Delete Organization</DialogTitle>
+                    <DialogDescription>
+                        Are you sure you want to delete <strong>{orgName}</strong>? This action cannot be undone.
+                        All projects and data within this organization will be permanently lost.
+                        <br /><br />
+                        Type <strong>DELETE</strong> to confirm.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                    <Input
+                        value={param}
+                        onChange={(e) => setParam(e.target.value)}
+                        placeholder="Type DELETE"
+                    />
+                    <Button
+                        variant="destructive"
+                        className="w-full"
+                        disabled={loading || param !== 'DELETE'}
+                        onClick={handleDelete}
+                    >
+                        {loading ? <Loader2 className="animate-spin mr-2" /> : 'Delete Organization'}
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>

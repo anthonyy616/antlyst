@@ -119,13 +119,16 @@ export class OrgService {
         }
 
         // Add Member
-        await prisma.orgMembership.create({
+        const membership = await prisma.orgMembership.create({
             data: {
                 userId,
                 organizationId: org.id,
                 role: 'member'
             }
         });
+
+        // Notify all members
+        await this.notifyAllMembers(prisma, org.id, 'New Member', `A new member has joined ${org.name}!`, userId);
 
         return { success: true, organization: org };
     }
@@ -219,6 +222,11 @@ export class OrgService {
                 }
             });
 
+            // Notify all members
+            // Need to fetch org name for nice message, or just generic.
+            const orgName = invite.organization.name;
+            await this.notifyAllMembers(tx, invite.organizationId, 'New Member', `A new member has joined ${orgName}!`, userId);
+
             // 5. Update Invite
             await tx.orgInviteLink.update({
                 where: { id: invite.id },
@@ -228,6 +236,75 @@ export class OrgService {
             return { success: true, organizationId: invite.organizationId };
         });
     }
+
+    /**
+     * Delete an organization and all associated data
+     */
+    static async deleteOrganization(userId: string, orgId: string) {
+        // 1. Verify Owner
+        const membership = await prisma.orgMembership.findUnique({
+            where: { userId_organizationId: { userId, organizationId: orgId } }
+        });
+
+        if (!membership || membership.role !== 'owner') {
+            throw new Error('Unauthorized: Only owners can delete the organization');
+        }
+
+        // 2. Delete (Cascade should handle most, but explicit is safer for some relations)
+        // Prisma transaction
+        return await prisma.$transaction(async (tx) => {
+            // Delete all notifications related to this org's activity could be tricky if they aren't linked to orgId directly.
+            // Assuming notifications are user-based. We might leave them or they might be hard to trace.
+            // For now, allow Prisma cascade for Project -> Dashboard etc.
+
+            // Delete Memberships
+            await tx.orgMembership.deleteMany({
+                where: { organizationId: orgId }
+            });
+
+            // Delete Invites
+            await tx.orgInviteLink.deleteMany({
+                where: { organizationId: orgId }
+            });
+
+            // Delete Projects (will cascade files etc if schema configured, otherwise we need manual)
+            // Assuming schema has cascade on delete. If not, this might fail. 
+            // Let's rely on Prisma schema or simple delete of Org.
+
+            // Delete Org (Cascades should be set up in Schema)
+            await tx.organization.delete({
+                where: { id: orgId }
+            });
+        });
+    }
+
+    private static async notifyAllMembers(tx: any, orgId: string, title: string, message: string, excludeUserId?: string) {
+        const members = await tx.orgMembership.findMany({
+            where: {
+                organizationId: orgId,
+                userId: { not: excludeUserId }
+            },
+            select: { userId: true }
+        });
+
+        if (members.length === 0) return;
+
+        await tx.notification.createMany({
+            data: members.map((m: any) => ({
+                userId: m.userId,
+                title,
+                message,
+                type: 'info'
+            }))
+        });
+    }
+
+    // ... (modify join functions below via multi_replace or manual edit if too complex)
+    // Actually, I'll add the new helper method and `deleteOrganization` here, 
+    // and I'll use separate replacement blocks/calls for the join functions to keep context clear.
+    // Since I can't do multiple discontinuous edits easily without `multi_replace`, I'll start by adding these methods at the end of the class.
+
+    // Wait, I am replacing the END of the file. I should verify if `notifyOwner` is at the end. Yes it is.
 
     private static async notifyOwner(tx: any, orgId: string, message: string) {
         // Find owner

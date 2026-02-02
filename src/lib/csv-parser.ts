@@ -41,7 +41,7 @@ export const parseCSV = (file: File, options: ParseOptions = {}): Promise<CSVPar
                     data: results.data,
                     errors: results.errors,
                     meta: results.meta,
-                    rowCount: results.data.length
+                    rowCount: results.data?.length || 0
                 });
             },
             error: (error) => {

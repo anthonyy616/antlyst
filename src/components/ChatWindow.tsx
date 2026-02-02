@@ -181,12 +181,10 @@ export function ChatWindow({ channelId }: { channelId: string }) {
     };
 
     return (
-        <div className="flex flex-col h-[500px] border rounded-lg bg-background">
-            <div className="p-4 border-b">
-                <h3 className="font-semibold">Team Chat</h3>
-            </div>
+        <div className="flex flex-col h-full bg-background">
+            {/* Header removed from here as it's in the page now, or keep minimalist */}
 
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea className="flex-1 p-4 h-full">
                 {isLoading ? (
                     <div className="flex justify-center items-center h-full">
                         <Loader2 className="animate-spin text-muted-foreground" />
