@@ -1,5 +1,26 @@
 # Project Audit & Gap Analysis
 
+[2026-02-02] Next Steps (from Chat Context)
+----------------------------------------
+1. Chat "Can't see own messages" Fix: Implement Optimistic UI updates (show message immediately before server confirmation).
+2. Chat Replies: Refine the UI for replying to specific messages.
+3. Project Validation: Verify "Delete Project" functionality.
+4. Project Share: Add a "Share" button to project cards (Copy Link).
+
+[2026-02-02] Build Failure (EPERM)
+----------------------------------------
+Problem: `npm run build` fails with `EPERM: operation not permitted ... query_engine-windows.dll.node`
+Cause: The development server (`npm run dev`) is running and holding a lock on the Prisma Client binary.
+Fix: 
+1. Stop the running development server (Ctrl+C in the terminal running `npm run dev`).
+2. Run `npm run build` again.
+
+[2026-02-02] Git Branch Issue
+----------------------------------------
+Problem: `git merge testt` failed.
+Cause: Typo in branch name. Use `git merge test` (if checking out from the 'test' branch).
+Observation: Switching to `main` appears to have removed many files (Phases B-E work). You likely need to merge `test` into `main` to get them back.
+
 ## 1. Visual Design Overhaul
 - **Current Status**: "Stale" slideshow exists (simple cross-fade of Unsplash images). Themes (`neon-night`, `corporate-blue`) are present in `globals.css` and switcher.
 - **Gap**: Slideshow needs to be "modern, high-quality, professional" with text/overlays and better transitions (slide+fade).
