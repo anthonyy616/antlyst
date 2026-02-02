@@ -8,20 +8,6 @@ datasource db {
 }
 
 // Synced from Clerk via webhook
-model Organization {
-  id        String   @id // Clerk org_xxx ID
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users    User[]
-  projects Project[]
-  invites  Invite[]
-
-  @@map("organizations")
-}
-
-// Synced from Clerk via webhook
 model User {
   id             String   @id // Clerk user_xxx ID
   email          String   @unique
@@ -31,14 +17,103 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull) // Deprecated in favor of memberships
+  memberships  OrgMembership[]
+  
   projects     Project[]     @relation("ProjectOwner")
   posts        Post[]
   comments     Comment[]
   reactions    Reaction[]
+  jobs         Job[]
+  joinRequests JoinRequest[]
+  notifications Notification[]
 
   @@index([organizationId])
   @@map("users")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  joinCode  String   @unique @default(cuid()) // Will be replaced by 8-char code logic
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  members     OrgMembership[]
+  projects    Project[]
+  invites     OrgInviteLink[]
+  joinRequests JoinRequest[]
+  jobs        Job[]
+  
+  // Legacy/Simple relation
+  users       User[]
+
+  @@map("organizations")
+}
+
+model OrgMembership {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role           String       @default("member") // owner, admin, member
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+  @@map("org_memberships")
+}
+
+model OrgInviteLink {
+  id             String       @id @default(cuid())
+  token          String       @unique
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  creatorId      String
+  expiresAt      DateTime
+  maxUses        Int          @default(100)
+  uses           Int          @default(0)
+  isRevoked      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@map("org_invite_links")
+}
+
+model JoinRequest {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  status         String       @default("pending") // pending, approved, rejected
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, organizationId]) // Only one pending request per user/org
+  @@index([organizationId])
+  @@map("join_requests")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // info, success, warning, error, invite, join_request
+  link      String?  // Action link
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
 }
 
 model Project {
@@ -61,6 +136,8 @@ model Project {
 
   @@index([organizationId])
   @@index([ownerId])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, name])
   @@map("projects")
 }
 
@@ -94,6 +171,7 @@ model Dashboard {
   updatedAt DateTime @updatedAt
 
   @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
   @@map("dashboards")
 }
 
@@ -171,18 +249,25 @@ model Reaction {
   @@map("reactions")
 }
 
-model Invite {
-  id             String       @id @default(cuid())
-  token          String       @unique // The unique code in the URL
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  creatorId      String       // User who created the invite
-  expiresAt      DateTime
-  maxUses        Int          @default(100)
-  uses           Int          @default(0)
-  isRevoked      Boolean      @default(false)
-  createdAt      DateTime     @default(now())
+model Job {
+  id        String   @id @default(cuid())
+  type      String   // "csv_ingest", "plot_generation", "ai_insight"
+  status    String   @default("queued") // queued, running, done, failed
+  progress  Int      @default(0)
+  payload   Json?
+  result    Json?
+  error     String?
+  
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orgId     String?
+  org       Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
 
-  @@index([organizationId])
-  @@map("invites")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([status])
+  @@map("jobs")
 }
