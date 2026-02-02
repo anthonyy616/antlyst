@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Folder } from "lucide-react";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 
+import { ShareProjectButton } from "@/components/ShareProjectButton";
+
 export default async function ProjectsPage() {
     const { userId } = await auth();
     if (!userId) redirect("/sign-in");
@@ -44,7 +46,8 @@ export default async function ProjectsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {projects.map((project) => (
                         <div key={project.id} className="relative group">
-                            <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                <ShareProjectButton projectId={project.id} />
                                 <DeleteProjectButton projectId={project.id} />
                             </div>
                             <Link href={`/dashboard/${project.id}`}>

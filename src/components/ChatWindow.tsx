@@ -14,7 +14,7 @@ interface Message {
     user_id: string;
     user_name: string;
     channel_id: string;
-    reply_to_id?: string;
+    reply_to_id?: string | null;
     created_at: string;
 }
 
@@ -56,7 +56,11 @@ export function ChatWindow({ channelId }: { channelId: string }) {
                     filter: `channel_id=eq.${channelId}`
                 }, (payload: any) => {
                     if (payload.eventType === 'INSERT') {
-                        setMessages(prev => [...prev, payload.new as Message]);
+                        const newMsg = payload.new as Message;
+                        setMessages(prev => {
+                            if (prev.some(m => m.id === newMsg.id)) return prev; // Dedup
+                            return [...prev, newMsg];
+                        });
                         // Auto scroll
                         if (scrollRef.current) {
                             scrollRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -82,33 +86,83 @@ export function ChatWindow({ channelId }: { channelId: string }) {
         }
     }, [messages]);
 
+    const [pendingMessages, setPendingMessages] = useState<Message[]>([]);
+
+    // ...
+
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !user) return;
 
+        const tempId = `temp-${Date.now()}`;
+        const msgContent = newMessage;
+        const msgReplyTo = replyingTo?.id || null;
+
+        const optimisticMsg: Message = {
+            id: tempId,
+            content: msgContent,
+            user_id: user.id,
+            user_name: user.fullName || user.primaryEmailAddress?.emailAddress || 'User',
+            channel_id: channelId,
+            reply_to_id: msgReplyTo,
+            created_at: new Date().toISOString()
+        };
+
+        // 1. Optimistic Update
+        setPendingMessages(prev => [...prev, optimisticMsg]);
+        setNewMessage('');
+        setReplyingTo(null);
+
+        // Scroll
+        setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: 'smooth' }), 10);
+
         const token = await getToken({ template: 'supabase' });
         const supabase = createSupabaseClient(token || undefined);
 
-        const msg = {
-            content: newMessage,
+        const msgPayload = {
+            content: msgContent,
             user_id: user.id,
             user_name: user.fullName || user.primaryEmailAddress?.emailAddress || 'Anonymous',
             channel_id: channelId,
-            reply_to_id: replyingTo?.id || null
+            reply_to_id: msgReplyTo
         };
 
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('messages')
-            .insert(msg);
+            .insert(msgPayload)
+            .select()
+            .single();
 
         if (error) {
             console.error('Send message error:', error);
             alert(`Error sending: ${error.message}`);
-        } else {
-            setNewMessage('');
-            setReplyingTo(null);
+            // Rollback
+            setPendingMessages(prev => prev.filter(m => m.id !== tempId));
+            setNewMessage(msgContent); // Restore text
+        } else if (data) {
+            // Success: Add real message to state immediately (Client-side confirmation)
+            setMessages(prev => {
+                // Prevent duplicates if Realtime already added it (unlikely this fast, but safe)
+                if (prev.some(m => m.id === data.id)) return prev;
+                return [...prev, data as Message];
+            });
+            // Remove optimistic message
+            setPendingMessages(prev => prev.filter(m => m.id !== tempId));
         }
     };
+
+    // Effect to clean up pending messages when they appear in real messages
+    useEffect(() => {
+        if (pendingMessages.length === 0) return;
+
+        const newMessagesIds = new Set(messages.map(m => m.content + m.created_at)); // fuzzy match or better?
+        // Actually, realtime event gives us the exact row.
+        // Let's just clear pending messages that match content of new real messages
+
+        setPendingMessages(prev => prev.filter(p =>
+            !messages.some(m => m.content === p.content && m.user_id === p.user_id)
+        ));
+    }, [messages]);
 
     const handleDelete = async (messageId: string) => {
         if (!confirm('Delete this message?')) return;
@@ -171,6 +225,21 @@ export function ChatWindow({ channelId }: { channelId: string }) {
                                 </div>
                             );
                         })}
+
+                        {/* Pending Messages (Optimistic UI) */}
+                        {pendingMessages.map((msg) => (
+                            <div key={msg.id} className="flex flex-col items-end opacity-70">
+                                <div className="max-w-[70%] rounded-lg p-3 bg-primary text-primary-foreground">
+                                    {msg.reply_to_id && (
+                                        <div className="mb-2 p-1 border-l-2 border-white/30 text-xs opacity-70 bg-black/10 rounded">
+                                            Reply...
+                                        </div>
+                                    )}
+                                    <p className="text-sm">{msg.content}</p>
+                                </div>
+                                <span className="text-xs text-muted-foreground">Sending...</span>
+                            </div>
+                        ))}
                         <div ref={scrollRef} />
                     </div>
                 )}

@@ -15,9 +15,9 @@ const uploadSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, orgId: userOrgId } = await auth();
+    const { userId } = await auth();
 
-    if (!userId || !userOrgId) {
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -33,9 +33,18 @@ export async function POST(request: NextRequest) {
 
     const { fileName, fileSize, mimeType, orgId, style } = validation.data;
 
-    // Security: verify user has access to this org
-    if (orgId !== userOrgId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // Security: Verify user is a member of the target organization
+    const membership = await prisma.orgMembership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId: orgId
+        }
+      }
+    });
+
+    if (!membership) {
+      return NextResponse.json({ error: 'Forbidden: You are not a member of this organization' }, { status: 403 });
     }
 
     // Create project in database

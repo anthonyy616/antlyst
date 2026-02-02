@@ -37,7 +37,10 @@ export class OrgService {
             where: { userId, role: 'owner' }
         });
 
-        if (userOrgsCount >= this.MAX_ORGS_PER_USER) {
+        // Admin Bypass
+        const ADMIN_ID = 'user_35jevq93WOfUd9L3wGw94mFDoXF';
+
+        if (userId !== ADMIN_ID && userOrgsCount >= this.MAX_ORGS_PER_USER) {
             throw new Error(`Limit reached: You can only create ${this.MAX_ORGS_PER_USER} organizations.`);
         }
 
