@@ -112,10 +112,15 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
                 xhr.open('PUT', signedUrl);
                 xhr.setRequestHeader('Content-Type', file.type);
                 xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) resolve();
-                    else reject(new Error('Upload failed'));
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve();
+                    } else {
+                        reject(new Error(`Upload failed with status ${xhr.status}`));
+                    }
                 };
-                xhr.onerror = () => reject(new Error('Network error'));
+                xhr.onerror = () => {
+                    reject(new Error('Network error. This is likely a CORS issue on your R2 bucket.'));
+                };
                 xhr.send(file);
             });
 
@@ -131,9 +136,9 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
             setRedirectUrl(`/${orgId}/projects/${projectId}`);
             setStep('complete');
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Upload failed.");
+            alert(`Upload failed: ${error.message}`);
             setStep('review'); // Go back to review so they can try again
         }
     };
