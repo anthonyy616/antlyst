@@ -1,18 +1,12 @@
 [
     {
         "AllowedOrigins": [
-            "https://antlyst.xyz",
-            "https://antlyst.vercel.app",
-            "https://antlyst-6r9ntu082-anthonys-projects-2f446dc7.vercel.app",
-            "https://www.antlyst.xyz",
-            "http://localhost:3000"
+            "*"
         ],
         "AllowedMethods": [
-            "PUT",
             "GET",
-            "POST",
-            "HEAD",
-            "DELETE"
+            "PUT",
+            "HEAD"
         ],
         "AllowedHeaders": [
             "*"

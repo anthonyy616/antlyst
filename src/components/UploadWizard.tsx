@@ -110,7 +110,8 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
 
             const uploadPromise = new Promise<void>((resolve, reject) => {
                 xhr.open('PUT', signedUrl);
-                xhr.setRequestHeader('Content-Type', file.type);
+                const contentType = file.type || 'text/csv';
+                xhr.setRequestHeader('Content-Type', contentType);
                 xhr.onload = () => {
                     if (xhr.status >= 200 && xhr.status < 300) {
                         resolve();
