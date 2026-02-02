@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { MessageSquare } from 'lucide-react';
 
 interface ChatPageProps {
-    searchParams: { [key: string]: string | string[] | undefined };
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function ChatPage({ searchParams }: ChatPageProps) {
@@ -26,8 +26,9 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
         redirect("/organization");
     }
 
+    const resolvedParams = await searchParams;
     // Determine active org
-    const orgIdParam = typeof searchParams.orgId === 'string' ? searchParams.orgId : undefined;
+    const orgIdParam = typeof resolvedParams.orgId === 'string' ? resolvedParams.orgId : undefined;
     const activeMembership = orgIdParam
         ? memberships.find(m => m.organizationId === orgIdParam)
         : memberships[0];
