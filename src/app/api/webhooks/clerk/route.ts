@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       data: {
         id: evt.data.id,
         name: evt.data.name,
+        slug: evt.data.slug,
       },
     });
   }

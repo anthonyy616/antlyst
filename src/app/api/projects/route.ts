@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
                 data: {
                     id: `org_${userId}`,
                     name: "Personal Workspace",
+                    slug: `personal-${userId}`,
                 }
             });
 
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
                 data: {
                     id: `org_${userId}`,
                     name: "Personal Workspace",
+                    slug: `personal-${userId}`,
                 }
             });
             user = await prisma.user.update({
@@ -71,6 +73,44 @@ export async function POST(req: NextRequest) {
         console.error("Error creating project:", error);
         return NextResponse.json(
             { error: "Failed to create project" },
+            { status: 500 }
+        );
+    }
+}
+
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const { userId } = await auth();
+        if (!userId) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ error: "Project ID is required" }, { status: 400 });
+        }
+
+        // Verify ownership
+        const project = await prisma.project.findUnique({
+            where: { id },
+        });
+
+        if (!project || project.ownerId !== userId) {
+            return NextResponse.json({ error: "Project not found or unauthorized" }, { status: 404 });
+        }
+
+        await prisma.project.delete({
+            where: { id },
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error("Error deleting project:", error);
+        return NextResponse.json(
+            { error: "Failed to delete project" },
             { status: 500 }
         );
     }

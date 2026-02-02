@@ -47,3 +47,5 @@ next-env.d.ts
 src/components/legacy/
 
 tunnel.txt
+
+*.sql 
