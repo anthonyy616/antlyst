@@ -85,47 +85,60 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
 
         try {
             // 1. Get Signed URL
-            const initRes = await fetch('/api/upload', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    fileName: file.name,
-                    fileSize: file.size,
-                    mimeType: file.type || 'text/csv', // Fallback for Windows/Excel sometimes missing type
-                    orgId,
-                    style: selectedStyle, // Passing style to backend
-                }),
-            });
+            let signedUrl, fileId, projectId;
+            try {
+                const initRes = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fileName: file.name,
+                        fileSize: file.size,
+                        mimeType: file.type || 'text/csv',
+                        orgId,
+                        style: selectedStyle,
+                    }),
+                });
 
-            if (!initRes.ok) throw new Error('Failed to initialize upload');
-            const { signedUrl, fileId, projectId } = await initRes.json();
+                if (!initRes.ok) {
+                    const errText = await initRes.text();
+                    throw new Error(`Server Init Error: ${initRes.status} ${errText}`);
+                }
+                const data = await initRes.json();
+                signedUrl = data.signedUrl;
+                fileId = data.fileId;
+                projectId = data.projectId;
+            } catch (e: any) {
+                throw new Error(`Step 1 (Init) Failed: ${e.message}`);
+            }
 
             // 2. Upload to R2
-            const xhr = new XMLHttpRequest();
-            xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) {
-                    setUploadProgress((event.loaded / event.total) * 100);
-                }
-            };
-
-            const uploadPromise = new Promise<void>((resolve, reject) => {
-                xhr.open('PUT', signedUrl);
-                const contentType = file.type || 'text/csv';
-                xhr.setRequestHeader('Content-Type', contentType);
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve();
-                    } else {
-                        reject(new Error(`Upload failed with status ${xhr.status}`));
+            try {
+                const xhr = new XMLHttpRequest();
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        setUploadProgress((event.loaded / event.total) * 100);
                     }
                 };
-                xhr.onerror = () => {
-                    reject(new Error('Network error. This is likely a CORS issue on your R2 bucket.'));
-                };
-                xhr.send(file);
-            });
 
-            await uploadPromise;
+                await new Promise<void>((resolve, reject) => {
+                    xhr.open('PUT', signedUrl);
+                    const contentType = file.type || 'text/csv';
+                    xhr.setRequestHeader('Content-Type', contentType);
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            resolve();
+                        } else {
+                            reject(new Error(`R2 Response Status: ${xhr.status}`));
+                        }
+                    };
+                    xhr.onerror = () => {
+                        reject(new Error('Network Error (CORS or Blocked)'));
+                    };
+                    xhr.send(file);
+                });
+            } catch (e: any) {
+                throw new Error(`Step 2 (Upload) Failed: ${e.message}`);
+            }
 
             // 3. Notify Backend
             await fetch('/api/upload-complete', {
@@ -139,8 +152,8 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
 
         } catch (error: any) {
             console.error(error);
-            alert(`Upload failed: ${error.message}`);
-            setStep('review'); // Go back to review so they can try again
+            alert(`${error.message}`);
+            setStep('review');
         }
     };
 
