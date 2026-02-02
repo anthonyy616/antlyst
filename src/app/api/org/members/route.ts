@@ -69,55 +69,56 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 });
     }
 }
-try {
-    const { userId } = await auth();
-    if (!userId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const validation = updateRoleSchema.safeParse(body);
-
-    if (!validation.success) {
-        return NextResponse.json({ error: 'Invalid input', details: validation.error }, { status: 400 });
-    }
-
-    const { organizationId, memberId, newRole } = validation.data;
-
-    // 1. Verify Requester is Owner
-    const requesterMembership = await prisma.orgMembership.findUnique({
-        where: {
-            userId_organizationId: {
-                userId,
-                organizationId
-            }
+export async function PATCH(request: NextRequest) {
+    try {
+        const { userId } = await auth();
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-    });
 
-    if (!requesterMembership || requesterMembership.role !== 'owner') {
-        return NextResponse.json({ error: 'Only owners can manage roles' }, { status: 403 });
-    }
+        const body = await request.json();
+        const validation = updateRoleSchema.safeParse(body);
 
-    // 2. Prevent changing own role (Owner cannot demote themselves here, simple safety)
-    if (memberId === userId) {
-        return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 });
-    }
+        if (!validation.success) {
+            return NextResponse.json({ error: 'Invalid input', details: validation.error }, { status: 400 });
+        }
 
-    // 3. Update Target Member Role
-    await prisma.orgMembership.update({
-        where: {
-            userId_organizationId: {
-                userId: memberId,
-                organizationId
+        const { organizationId, memberId, newRole } = validation.data;
+
+        // 1. Verify Requester is Owner
+        const requesterMembership = await prisma.orgMembership.findUnique({
+            where: {
+                userId_organizationId: {
+                    userId,
+                    organizationId
+                }
             }
-        },
-        data: { role: newRole }
-    });
+        });
 
-    return NextResponse.json({ success: true });
+        if (!requesterMembership || requesterMembership.role !== 'owner') {
+            return NextResponse.json({ error: 'Only owners can manage roles' }, { status: 403 });
+        }
 
-} catch (error: any) {
-    console.error("Update Role Error:", error);
-    return NextResponse.json({ error: 'Failed to update role' }, { status: 500 });
-}
+        // 2. Prevent changing own role (Owner cannot demote themselves here, simple safety)
+        if (memberId === userId) {
+            return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 });
+        }
+
+        // 3. Update Target Member Role
+        await prisma.orgMembership.update({
+            where: {
+                userId_organizationId: {
+                    userId: memberId,
+                    organizationId
+                }
+            },
+            data: { role: newRole }
+        });
+
+        return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        console.error("Update Role Error:", error);
+        return NextResponse.json({ error: 'Failed to update role' }, { status: 500 });
+    }
 }
