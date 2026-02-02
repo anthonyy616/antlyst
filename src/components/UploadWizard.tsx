@@ -158,7 +158,7 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
     };
 
     return (
-        <Card className="p-8 w-full max-w-4xl mx-auto transition-all duration-300">
+        <Card className="p-4 md:p-8 w-full max-w-4xl mx-auto transition-all duration-300">
             <AnimatePresence mode="wait">
                 {step === 'idle' && (
                     <motion.div
@@ -169,7 +169,7 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
                     >
                         <div
                             {...getRootProps()}
-                            className={`cursor-pointer rounded-xl border-2 border-dashed p-16 text-center transition-all duration-200 ${isDragActive
+                            className={`cursor-pointer rounded-xl border-2 border-dashed p-8 md:p-16 text-center transition-all duration-200 ${isDragActive
                                 ? 'border-brand-purple bg-brand-purple/5 scale-[1.01]'
                                 : 'border-muted-foreground/30 hover:border-brand-purple/50 hover:bg-muted/30'
                                 }`}
