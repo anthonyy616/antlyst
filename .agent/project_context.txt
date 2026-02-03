@@ -1,95 +1,98 @@
 # Project Context: Antlyst.xyz
 
-**Last Updated:** 2025-12-23
-**Current Phase:** Phase 1 (Audit & Plan) -> Moving to Phase 2
+**Last Updated:** 2026-02-02
+**Current Phase:** Live / Maintenance & Scaling
 
 ## 1. Project Overview
-**Antlyst.xyz** is a web application allowing users to upload CSV files for interactive analysis, visualization, and collaborative sharing. It aims to provide "Data Visualization Reimagined" by automatically generating three distinct dashboard styles (Simple, ML-Enhanced, Power BI Style) from a single upload.
-**Long-term Goal:** Develop an advanced AI algorithm capable of identifying hidden trends and "secret" insights in ANY dataset using trained models, making high-level data intelligence accessible to everyone.
+**Antlyst.xyz** is a **collaborative data analytics SaaS** that empowers teams to visualize, share, and discuss their data instantly. 
+
+The core value proposition is "Zero-Config Dashboards": Users upload a raw CSV, and Antlyst automatically generates interactive, insight-rich dashboards using one of three engines:
+1.  **Simple**: Quick, clean statistical overviews.
+2.  **ML-Enhanced**: Predictive trends, clusters, and advanced pattern recognition.
+3.  **Power BI Style**: A robust, business-intelligence style layout for executives.
+
+Unlike static tools, Antlyst is built for **Teams**. It features organization-based workspaces, real-time chat channels for discussing data, and a seamless invite system.
+
+**Mission:** Democratize high-level data intelligence. Turn any CSV into a boardroom-ready presentation in seconds.
 
 ## 2. Technology Stack
-- **Frontend:** Next.js (App Router), React, Tailwind CSS, Framer Motion.
-- **Backend:** Next.js API Routes, Server Actions.
-- **Database:** PostgreSQL (via Prisma ORM), likely hosting on Neon or Supabase.
-- **Storage:** Cloudflare R2 (for CSV files).
-- **Authentication:** Clerk.
-- **Visualization:** Recharts, Plotly.js, React Three Fiber (potential).
-- **Language:** TypeScript.
+An advanced, production-grade Next.js 15 application deployed on Vercel.
 
-## 3. Original Features (Audit Results)
-- **Landing Page:** Animated hero section, feature breakdown (3 engines), call to action.
-- **Authentication:** Clerk integration (Sign In, Sign Up).
-- **Database Model:**
-    - `Organization`: Supports teams.
-    - `User`: Linked to organizations.
-    - `Project`: Contains files and dashboards.
-    - `File`: Metadata for uploaded CSVs.
-    - `Dashboard`: Config for different visualization engines.
-    - `Analysis`: Stores analysis results.
-- **UI Components:** `NetworkBackground` (canvas-based particle animation), Theme Toggle (Light/Dark).
+-   **Framework:** Next.js 15 (App Router, Server Actions).
+-   **Language:** TypeScript (Strict Mode).
+-   **Styling:** Tailwind CSS, Shadcn UI (Radix Primitives), Framer Motion (Animations).
+-   **Database:** PostgreSQL (Prisma ORM). Managed by Supabase (mostly for Realtime/Connection pooling).
+-   **Authentication:** Clerk (User Mgmt) synced with internal Tables via Webhooks.
+-   **Storage:** Cloudflare R2 (S3-compatible) for raw CSV storage.
+    -   *Key Feature:* Direct Browser-to-R2 uploads using Signed URLs (bypasses Server limits).
+-   **Real-time:** Supabase Realtime (Postgres Changes) for Chat & Notifications.
+-   **Visualization:** Recharts, Plotly.js.
 
-## 4. New Requirements (Enhancement Plan)
+## 3. Key Features
 
-### Visual Design
-- [ ] **Slideshow Hero:** Replace static image with high-quality, auto-cycling slideshow (fade/slide, 8-10s).
-- [ ] **Rich Aesthetics:** "Premium" feel, glassmorphism, dynamic animations, no generic colors.
-- [ ] **Multi-Theme Support:** Light, Dark, + 2-3 new color schemes (e.g., "Neon Night", "Corporate Blue").
-- [ ] **Micro-animations:** Hover effects, card entrances, loading states.
+### Data Pipeline & Analysis
+-   **Smart Upload Wizard:** 
+    -   Drag-and-drop CSV/Excel.
+    -   Client-side parsing preview (Web Workers).
+    -   Direct-to-R2 upload (CORS-enabled for Scale).
+    -   Mobile-responsive design.
+-   **Dashboard Engines:** 
+    -   Selectable styles (Simple/ML/PowerBI) trigger different algorithmic pipelines.
+    -   Auto-generated charts based on column data types.
 
-### Core Functionality
-- [ ] **Robust CSV Parsing:** Fix bugs with large files (100k+ rows).
-- [ ] **Plot Selection:** Clean UI to choose plotting style (Simple, ML, PBI-like).
-- [ ] **Backend Generation:** Python/Node generation logic for selected styles.
-- [ ] **AI Insights:** Toggle for "AI-Powered Insights" (trends, anomalies, actions).
+### Organization & Team Management
+-   **Multi-Tenancy:** Users can belong to multiple Organizations.
+-   **Invite System:** 
+    -   Shareable `join/[code]` links.
+    -   Role-based access (Owner vs Member).
+    -   Invite notifications for existing members.
+-   **Management:** 
+    -   Promote/Demote members.
+    -   Delete Organization (Owner only).
+    -   Kick members.
 
-### Collaboration ("Organizations")
-- [ ] **Real-time Feed:** Share plots, threaded comments, reactions (Supabase Realtime).
-- [ ] **Custom Invites:** Shareable link system (e.g., `antlyst.xyz/invite/...`) that adds users to the underlying Clerk organization transparently.
-- [ ] **Custom Plots:** Automatic initial generation, with UI controls for users to manually swap X/Y axes or data columns.
+### Collaboration & Chat
+-   **Real-time Chat:**
+    -   Slack-like interface (`ChatWindow.tsx`).
+    -   Organization-wide `#general` channels.
+    -   Optimistic UI updates for zero-latency feel.
+    -   Mobile-responsive (sticky inputs, adaptive height).
+-   **Notifications:**
+    -   New Member alerts.
+    -   Upload completion alerts.
 
-## 5. Phased Implementation Plan
+## 4. Architecture Highlights
 
-### Phase 1: Setup & Context (Completed)
-- [x] Audit codebase.
-- [x] Create `project_context.txt`.
-- [x] Confirm tech stack and current state.
+### SaaS Data Model
+-   **Users** (Clerk) <-> **OrgMembership** <-> **Organization**.
+-   **Projects** belong to **Organizations**, not just Users.
+-   **Files** are stored in R2, metadata in Postgres.
 
-### Phase 2: Visual & Animation Overhaul (Completed)
-- [x] **Theme System:** Extend `tailwind.config.ts` and `globals.css` for multiple themes (class-based).
-- [x] **Hero Slideshow:** Implement `HeroSlideshow.tsx` with Framer Motion.
-- [x] **Global Polish:** Update `NetworkBackground` to respect new themes, add glassmorphism utilities.
+### Performance Optimizations (Fast Routes)
+-   **Public Routes:** Landing, Pricing, and Sign-in are statically optimized or cached.
+-   **Heavy Computation:** CSV parsing is offloaded to Client Web Workers or async Server Actions.
+-   **Bundle Size:** Heavy charting libraries (Plotly) are lazy-loaded.
 
-### Phase 3: CSV Handling & Plot Selection UI (Refactoring)
-- [x] Create `PlotStyleSelector` component.
-- [x] Update file upload flow (Basic).
-- [ ] Fix CSV parsing (Large file support - currently memory bound).
+## 5. Recent Development Log
 
-### Phase 4: Plot Generation Backend (Refactoring)
-- [x] API routes for generating plot data/config.
-- [ ] Optimize `analysis-engine` for large datasets.
+### February 2026 (Refinement & Fixes)
+-   **R2 Integration:** Solved complex CORS issues for Direct-to-R2 uploads on live domains (`antlyst.xyz`, Vercel). Added specific error trapping in `UploadWizard`.
+-   **Next.js 15 Upgrade:** Migrated `searchParams` to Promises, fixed caching behavior, and updated `tsbuildinfo`.
+-   **Mobile Experience:**
+    -   Refactored `ChatWindow` for dynamic viewport height (dvh).
+    -   Added Organization Switcher tabs for mobile users.
+    -   responsive padding for `UploadWizard`.
+-   **Team Logic Completion:**
+    -   Implemented `DELETE` Org logic with cascading cleanup.
+    -   Added "Notify All Members" on new user join.
+    -   Fixed unique constraint/role bugs in `OrgService`.
 
-### Phase 5: Authentication & Organizations Basics (Completed)
-- [x] Ensure Clerk auth is fully functional.
-- [x] Implement Organization creation/invite flow (leveraging existing Schema).
+### January 2026 (Core Build)
+-   Implemented Realtime Chat using Supabase.
+-   Built the three Dashboard Logic engines.
+-   Integrated Clerk Auth.
 
-### Phase 6: Collaboration Features (Refactoring)
-- [ ] **Real-time Feed:** Switch from Polling to WebSockets/Supabase Realtime.
-- [x] Comment/Reaction system database implementation.
-- [x] Frontend for feed.
-
-### Phase 7: AI Insights System (Completed)
-- [x] Integration with statistical heuristics (Outliers/Trends).
-- [x] UI for displaying insights.
-
-### Phase 8: Performance & Security (Completed)
-- [x] Optimization (Worker for CSV).
-- [x] Security audit (Zod validation, Headers).
-
-### Phase 9: Final Polish
-
-### Phase 9: Final Polish
-- [ ] End-to-end testing.
-- [ ] User acceptance walkthrough.
-
-## 6. Project Log
-- **2025-12-22:** Phase 1 initiated. Audited `schema.prisma` and `page.tsx`. Created this context file. Moving to Phase 2.
+## 6. Future Roadmap
+-   **AI Analyst Agent:** A chat bot that can "talk" to the specific CSV data context.
+-   **Export:** PDF/Image export of dashboards.
+-   **Team Tier:** Stripe integration for paid Organization plans.

@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users, MessageSquare, LayoutDashboard, FolderKanban, Menu } from 'lucide-react';
+import { BarChart3, Users, MessageSquare, LayoutDashboard, FolderKanban, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
+import { useSidebar } from '@/context/SidebarContext';
 
 const routes = [
     {
@@ -35,19 +36,23 @@ const routes = [
     },
 ];
 
-export function Sidebar() {
+export function Sidebar({ forceExpand = false }: { forceExpand?: boolean }) {
     const pathname = usePathname();
+    const { isCollapsed, toggle } = useSidebar();
+    const collapsed = forceExpand ? false : isCollapsed;
 
     return (
-        <div className="space-y-4 py-4 flex flex-col h-full bg-slate-900 text-white">
-            <div className="px-3 py-2 flex-1">
-                <Link href="/projects" className="flex items-center pl-3 mb-14">
-                    <div className="relative w-8 h-8 mr-4">
+        <div className={cn("space-y-4 py-4 flex flex-col h-full bg-slate-900 text-white transition-all duration-300", collapsed ? "items-center" : "")}>
+            <div className="px-3 py-2 flex-1 w-full">
+                <Link href="/projects" className={cn("flex items-center mb-14 transition-all duration-300", collapsed ? "justify-center pl-0" : "pl-3")}>
+                    <div className="relative w-8 h-8 mr-0">
                         <BarChart3 className="w-8 h-8 text-brand-purple" />
                     </div>
-                    <h1 className="text-2xl font-bold">
-                        Antlyst
-                    </h1>
+                    {!collapsed && (
+                        <h1 className="text-2xl font-bold ml-4">
+                            Antlyst
+                        </h1>
+                    )}
                 </Link>
                 <div className="space-y-1">
                     {routes.map((route) => (
@@ -56,17 +61,30 @@ export function Sidebar() {
                             href={route.href}
                             className={cn(
                                 "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-white hover:bg-white/10 rounded-lg transition",
-                                pathname.startsWith(route.href) ? "text-white bg-white/10" : "text-zinc-400"
+                                pathname.startsWith(route.href) ? "text-white bg-white/10" : "text-zinc-400",
+                                collapsed ? "justify-center" : ""
                             )}
                         >
                             <div className="flex items-center flex-1">
-                                <route.icon className={cn("h-5 w-5 mr-3", route.color)} />
-                                {route.label}
+                                <route.icon className={cn("h-5 w-5", route.color, collapsed ? "mr-0" : "mr-3")} />
+                                {!collapsed && route.label}
                             </div>
                         </Link>
                     ))}
                 </div>
             </div>
+            {/* Toggle Button (Desktop Only) */}
+            {!forceExpand && (
+                <div className="px-3 py-4 border-t border-slate-800">
+                    <Button
+                        onClick={toggle}
+                        variant="ghost"
+                        className="w-full justify-center"
+                    >
+                        {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
@@ -82,7 +100,7 @@ export function MobileSidebar() {
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 bg-slate-900 border-none text-white w-72">
-                <Sidebar />
+                <Sidebar forceExpand={true} />
             </SheetContent>
         </Sheet>
     );

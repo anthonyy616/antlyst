@@ -7,6 +7,13 @@ export class OrgService {
     private static MAX_MEMBERS_PER_ORG = 5;
     private static MAX_ORGS_PER_USER = 2;
 
+    static async getOrgByCode(code: string) {
+        return await prisma.organization.findUnique({
+            where: { joinCode: code },
+            select: { id: true, name: true, imageUrl: true, _count: { select: { members: true } } }
+        });
+    }
+
     /**
      * Create a new organization and set the creator as owner
      * Ensures user exists in DB before creating organization.

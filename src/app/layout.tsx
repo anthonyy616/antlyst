@@ -29,6 +29,7 @@ export default function RootLayout({
                     <NeonOrbsWrapper />
                     {children}
                 </ThemeProvider>
+                <Analytics />
             </body>
         </html>
     );

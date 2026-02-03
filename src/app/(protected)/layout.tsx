@@ -1,6 +1,6 @@
 import { ClerkProvider } from '@clerk/nextjs'
-import { ProtectedHeader } from '@/components/ProtectedHeader';
-import { Sidebar } from '@/components/Sidebar';
+import { SidebarProvider } from '@/context/SidebarContext';
+import { ProtectedLayoutClient } from '@/components/ProtectedLayoutClient';
 
 export default function ProtectedLayout({
     children,
@@ -9,17 +9,11 @@ export default function ProtectedLayout({
 }) {
     return (
         <ClerkProvider>
-            <div className="h-full relative">
-                <div className="hidden h-full md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 z-[80] bg-gray-900">
-                    <Sidebar />
-                </div>
-                <main className="md:pl-72 flex flex-col min-h-screen">
-                    <ProtectedHeader />
-                    <div className="flex-1 p-6">
-                        {children}
-                    </div>
-                </main>
-            </div>
+            <SidebarProvider>
+                <ProtectedLayoutClient>
+                    {children}
+                </ProtectedLayoutClient>
+            </SidebarProvider>
         </ClerkProvider>
     );
 }

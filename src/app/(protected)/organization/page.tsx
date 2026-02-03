@@ -236,7 +236,7 @@ export default function OrganizationPage() {
                                                 </div>
                                                 <div className="flex items-center gap-2 bg-slate-100 p-2 rounded text-sm font-mono border border-slate-200">
                                                     <span className="text-black font-bold tracking-widest">{org.joinCode}</span>
-                                                    <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto" onClick={() => copyCode(org.joinCode!)}>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6 ml-auto" onClick={() => copyCode(`${window.location.origin}/join/${org.joinCode}`)}>
                                                         <Copy className="h-3 w-3" />
                                                     </Button>
                                                 </div>

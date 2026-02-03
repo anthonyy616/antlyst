@@ -120,6 +120,13 @@ export function DashboardView({ config }: DashboardViewProps) {
                                         }
                                     }}
                                     style={{ width: '100%', height: '100%' }}
+                                    config={{
+                                        scrollZoom: true,
+                                        displayModeBar: true,
+                                        displaylogo: false,
+                                        modeBarButtonsToAdd: ['zoom2d', 'pan2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
+                                        responsive: true
+                                    }}
                                     useResizeHandler={true}
                                 />
                             </CardContent>

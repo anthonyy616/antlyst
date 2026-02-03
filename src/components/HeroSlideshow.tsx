@@ -10,7 +10,7 @@ const IMAGES = [
         alt: "Interactive Financial Dashboard",
     },
     {
-        src: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2670&auto=format&fit=crop",
+        src: "/screenshots/dashboard-laptop-1.png",
         alt: "Team analyzing business metrics",
     },
     {
@@ -18,7 +18,7 @@ const IMAGES = [
         alt: "Digital growth charts",
     },
     {
-        src: "https://images.unsplash.com/photo-1599658880436-e252446958d5?q=80&w=2670&auto=format&fit=crop",
+        src: "/screenshots/dashboard-laptop-2.png",
         alt: "Modern analytics interface",
     }
 ];
