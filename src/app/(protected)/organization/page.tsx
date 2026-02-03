@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@clerk/nextjs';
-import { Plus, Users, Loader2, Copy, Shield, MoreVertical } from 'lucide-react';
+import { Plus, Users, Loader2, Copy, Shield, MoreVertical, Share2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
     Dialog,
@@ -30,6 +30,7 @@ interface Org {
     joinCode?: string;
     role: string;
     memberCount: number;
+    members: { id: string, name: string, imageUrl: string, email: string }[];
 }
 
 interface Member {
@@ -125,8 +126,9 @@ export default function OrganizationPage() {
         }
     };
 
-    const copyCode = (code: string) => {
-        navigator.clipboard.writeText(code);
+    const copyCode = (text: string) => {
+        navigator.clipboard.writeText(text);
+        // Could add toast here
     };
 
     if (loading) {
@@ -219,13 +221,41 @@ export default function OrganizationPage() {
                                 <CardHeader className="pb-2">
                                     <div className="flex justify-between items-start">
                                         <CardTitle className="text-lg">{org.name}</CardTitle>
-                                        <Badge variant={org.role === 'owner' ? 'default' : 'secondary'}>
-                                            {org.role}
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                            {org.joinCode && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-brand-purple"
+                                                    onClick={() => copyCode(`${window.location.origin}/join/${org.joinCode}`)}
+                                                    title="Share Invite Link"
+                                                >
+                                                    <Share2 className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                            <Badge variant={org.role === 'owner' ? 'default' : 'secondary'}>
+                                                {org.role}
+                                            </Badge>
+                                        </div>
                                     </div>
                                     <CardDescription>
                                         {org.memberCount} members
                                     </CardDescription>
+
+                                    {/* Members Avatars */}
+                                    <div className="flex -space-x-2 overflow-hidden py-2">
+                                        {org.members?.map((m) => (
+                                            <Avatar key={m.id} className="inline-block h-8 w-8 ring-2 ring-white">
+                                                <AvatarImage src={m.imageUrl} />
+                                                <AvatarFallback>{m.name?.[0] || '?'}</AvatarFallback>
+                                            </Avatar>
+                                        ))}
+                                        {(org.memberCount > (org.members?.length || 0)) && (
+                                            <div className="flex items-center justify-center h-8 w-8 rounded-full ring-2 ring-white bg-slate-100 text-xs font-medium text-slate-500">
+                                                +{org.memberCount - (org.members?.length || 0)}
+                                            </div>
+                                        )}
+                                    </div>
                                 </CardHeader>
                                 <CardContent className="pb-2 space-y-4">
                                     {org.joinCode && (

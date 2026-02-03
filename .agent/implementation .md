@@ -8,73 +8,73 @@
  ---
  Phase 1: Quick Wins & UX (Priority: Highest)
 
- Feature 1: Replace Hero Images 2 & 4
+    Feature 1: Replace Hero Images 2 & 4
 
- Files to modify:
+    Files to modify:
 
-- src/components/HeroSlideshow.tsx - Update IMAGES array at lines 7-24
-- public/screenshots/ - Create directory, add dashboard laptop mockup images
+    - src/components/HeroSlideshow.tsx - Update IMAGES array at lines 7-24
+    - public/screenshots/ - Create directory, add dashboard laptop mockup images
 
- Image Specifications:
+    Image Specifications:
 
-- Dimensions: 1400x900px (16:9 aspect ratio)
-- Format: PNG or WebP for quality
-- Content:
-  - Image 2: Dashboard on MacBook/laptop showing bar charts + KPI cards
-  - Image 4: Dashboard on laptop showing pie charts + trend lines
-- Style: Clean mockup with slight shadow, angled laptop view (15-30 degrees)
-- Background: Light gradient or solid (#f8fafc or transparent)
-- Sources to create:
-  - Option A: Screenshot your actual Antlyst dashboard, paste into laptop mockup template
-  - Option B: Use Figma/Canva laptop mockup templates
-  - Option C: Use sites like mockuper.net, smartmockups.com (free tier)
+    - Dimensions: 1400x900px (16:9 aspect ratio)
+    - Format: PNG or WebP for quality
+    - Content:
+    - Image 2: Dashboard on MacBook/laptop showing bar charts + KPI cards
+    - Image 4: Dashboard on laptop showing pie charts + trend lines
+    - Style: Clean mockup with slight shadow, angled laptop view (15-30 degrees)
+    - Background: Light gradient or solid (#f8fafc or transparent)
+    - Sources to create:
+    - Option A: Screenshot your actual Antlyst dashboard, paste into laptop mockup template
+    - Option B: Use Figma/Canva laptop mockup templates
+    - Option C: Use sites like mockuper.net, smartmockups.com (free tier)
 
- Implementation:
+    Implementation:
 
- 1. Create 2 dashboard-on-laptop mockup images per specs above
- 2. Save to public/screenshots/dashboard-laptop-1.png, dashboard-laptop-2.png
- 3. Update IMAGES array indices 1 and 3 with local paths: /screenshots/dashboard-laptop-1.png
+    1. Create 2 dashboard-on-laptop mockup images per specs above
+    2. Save to public/screenshots/dashboard-laptop-1.png, dashboard-laptop-2.png
+    3. Update IMAGES array indices 1 and 3 with local paths: /screenshots/dashboard-laptop-1.png
 
- ---
- Feature 2: Collapsible Sidebar (Mobile + Desktop)
+    ---
+    Feature 2: Collapsible Sidebar (Mobile + Desktop)
 
- Files to create:
+    Files to create:
 
-- src/context/SidebarContext.tsx - Global collapse state provider
+    - src/context/SidebarContext.tsx - Global collapse state provider
 
- Files to modify:
+    Files to modify:
 
-- src/components/Sidebar.tsx - Add toggle button, conditional widths
-- src/app/(protected)/layout.tsx - Wrap with provider, dynamic padding
+    - src/components/Sidebar.tsx - Add toggle button, conditional widths
+    - src/app/(protected)/layout.tsx - Wrap with provider, dynamic padding
 
- Implementation:
+    Implementation:
 
- 1. Create SidebarContext with isCollapsed, toggle() state
- 2. Add ChevronLeft/ChevronRight toggle button to Sidebar
- 3. Implement width transition: w-72 (expanded) ↔ w-16 (collapsed)
- 4. Hide text labels when collapsed, show icons only with tooltips
- 5. Update layout padding: md:pl-72 ↔ md:pl-16
- 6. Add transition-all duration-300 for smooth animation
- 7. Persist state in localStorage
+    1. Create SidebarContext with isCollapsed, toggle() state
+    2. Add ChevronLeft/ChevronRight toggle button to Sidebar
+    3. Implement width transition: w-72 (expanded) ↔ w-16 (collapsed)
+    4. Hide text labels when collapsed, show icons only with tooltips
+    5. Update layout padding: md:pl-72 ↔ md:pl-16
+    6. Add transition-all duration-300 for smooth animation
+    7. Persist state in localStorage
 
- ---
- Feature 4: Chart Zoom/Pan
+    ---
+    Feature 4: Chart Zoom/Pan
 
- Files to modify:
+    Files to modify:
 
-- src/components/DashboardView.tsx - Add Plotly config object
+    - src/components/DashboardView.tsx - Add Plotly config object
 
- Implementation:
- const plotlyConfig = {
-   scrollZoom: true,
-   displayModeBar: true,
-   displaylogo: false,
-   modeBarButtonsToAdd: ['zoom2d', 'pan2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
-   responsive: true
- };
- // Pass to <Plot config={plotlyConfig} />
+    Implementation:
+    const plotlyConfig = {
+    scrollZoom: true,
+    displayModeBar: true,
+    displaylogo: false,
+    modeBarButtonsToAdd: ['zoom2d', 'pan2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d'],
+    responsive: true
+    };
+    // Pass to <Plot config={plotlyConfig} />
 
- ---
+    ---
  Phase 2: Core Dashboard Enhancements (Priority: High)
 
  Feature 5: Fix PowerBI Engine

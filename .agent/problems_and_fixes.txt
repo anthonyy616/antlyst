@@ -34,4 +34,4 @@
 
 12. Integrate two payment gateways - stripe for US customers and another one for local like nigerian + crypto payment API
 
-13. Improve SEO
+13. Improve SEO 

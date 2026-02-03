@@ -10,13 +10,13 @@ import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface InvitePageProps {
-    params: {
+    params: Promise<{
         code: string;
-    };
+    }>;
 }
 
 export default async function InvitePage({ params }: InvitePageProps) {
-    const { code } = params;
+    const { code } = await params;
 
     // Normalize code
     const normalizedCode = code.toUpperCase();

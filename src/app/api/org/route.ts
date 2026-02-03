@@ -57,6 +57,20 @@ export async function GET(request: NextRequest) {
                     include: {
                         _count: {
                             select: { members: true }
+                        },
+                        members: {
+                            take: 5,
+                            orderBy: { role: 'asc' }, // owner first usually
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        imageUrl: true,
+                                        email: true
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -73,6 +87,12 @@ export async function GET(request: NextRequest) {
                 joinCode: canManage ? m.organization.joinCode : undefined, // Only show if admin/owner
                 role: m.role,
                 memberCount: m.organization._count.members,
+                members: m.organization.members.map(mem => ({
+                    id: mem.user.id,
+                    name: mem.user.name,
+                    imageUrl: mem.user.imageUrl,
+                    email: mem.user.email
+                })),
                 createdAt: m.organization.createdAt
             };
         });
