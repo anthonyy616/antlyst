@@ -113,6 +113,7 @@ model Notification {
 
   @@index([userId])
   @@index([isRead])
+  @@index([userId, isRead])
   @@map("notifications")
 }
 
@@ -157,6 +158,7 @@ model File {
   analysisResult AnalysisResult?
 
   @@index([projectId])
+  @@index([projectId, uploadStatus])
   @@map("files")
 }
 
@@ -215,6 +217,7 @@ model Post {
   reactions Reaction[]
 
   @@index([projectId])
+  @@index([projectId, createdAt(sort: Desc)])
   @@index([userId])
   @@map("posts")
 }

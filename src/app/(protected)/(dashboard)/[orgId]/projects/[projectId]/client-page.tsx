@@ -13,19 +13,32 @@ interface ProjectDashboardClientProps {
 
 export default function ProjectDashboardClient({ projectId }: ProjectDashboardClientProps) {
     const [config, setConfig] = useState<DashboardConfig | null>(null);
+    const [feedData, setFeedData] = useState<any[] | undefined>(undefined);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchDashboard = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch(`/api/projects/${projectId}/dashboard`);
-                if (!res.ok) {
-                    const err = await res.json();
+                const [dashboardRes, feedRes] = await Promise.all([
+                    fetch(`/api/projects/${projectId}/dashboard`),
+                    fetch(`/api/projects/${projectId}/feed`)
+                ]);
+
+                if (!dashboardRes.ok) {
+                    const err = await dashboardRes.json();
                     throw new Error(err.error || 'Failed to load dashboard');
                 }
-                const data = await res.json();
-                setConfig(data);
+
+                // Feed failure shouldn't block dashboard? The prompt says "fix waterfall", assuming success.
+                // But let's just await both json.
+                const [dashboardData, feedList] = await Promise.all([
+                    dashboardRes.json(),
+                    feedRes.ok ? feedRes.json() : []
+                ]);
+
+                setConfig(dashboardData);
+                setFeedData(feedList);
             } catch (err: any) {
                 console.error(err);
                 setError(err.message || "An unexpected error occurred");
@@ -34,7 +47,7 @@ export default function ProjectDashboardClient({ projectId }: ProjectDashboardCl
             }
         };
 
-        fetchDashboard();
+        fetchData();
     }, [projectId]);
 
     if (loading) {
@@ -69,7 +82,7 @@ export default function ProjectDashboardClient({ projectId }: ProjectDashboardCl
                 <DashboardView config={config} />
             </div>
             <div className="w-[350px] border-l border-slate-200 bg-slate-50 h-full">
-                <ProjectFeed projectId={projectId} />
+                <ProjectFeed projectId={projectId} initialData={feedData} />
             </div>
         </div>
     );

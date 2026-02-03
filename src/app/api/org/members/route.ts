@@ -36,21 +36,30 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
         }
 
-        // 2. Fetch Members
-        const members = await prisma.orgMembership.findMany({
-            where: { organizationId },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        imageUrl: true
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '50');
+        const skip = (page - 1) * limit;
+
+        // 2. Fetch Members with Pagination
+        const [members, total] = await prisma.$transaction([
+            prisma.orgMembership.findMany({
+                where: { organizationId },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            imageUrl: true
+                        }
                     }
-                }
-            },
-            orderBy: { role: 'asc' } // owner, then member
-        });
+                },
+                orderBy: { role: 'asc' }, // owner, then member
+                skip,
+                take: limit
+            }),
+            prisma.orgMembership.count({ where: { organizationId } })
+        ]);
 
         // 3. Format
         const formattedMembers = members.map(m => ({
@@ -62,7 +71,15 @@ export async function GET(request: NextRequest) {
             joinedAt: m.createdAt
         }));
 
-        return NextResponse.json({ members: formattedMembers });
+        return NextResponse.json({
+            members: formattedMembers,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        });
 
     } catch (error: any) {
         console.error("Fetch Members Error:", error);

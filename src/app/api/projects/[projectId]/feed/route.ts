@@ -30,10 +30,8 @@ export async function GET(
                 select: { comments: true, reactions: true }
             },
             reactions: {
-                where: { userId }, // Only fetch current user's reactions to check 'liked' state? 
-                // actually better to fetch all to show counts per type, 
-                // but for MVP just showing logic.
-                include: { user: true }
+                where: { userId }, // Only fetch current user's reactions
+                select: { userId: true, emoji: true }
             }
         },
         orderBy: { createdAt: 'desc' },

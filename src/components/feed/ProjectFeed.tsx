@@ -10,8 +10,10 @@ import { Loader2, Send } from 'lucide-react';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-export function ProjectFeed({ projectId }: { projectId: string }) {
-    const { data: posts, error, mutate } = useSWR(`/api/projects/${projectId}/feed`, fetcher); // Removed polling
+export function ProjectFeed({ projectId, initialData }: { projectId: string; initialData?: any[] }) {
+    const { data: posts, error, mutate } = useSWR(`/api/projects/${projectId}/feed`, fetcher, {
+        fallbackData: initialData
+    }); // Removed polling
     const [content, setContent] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
