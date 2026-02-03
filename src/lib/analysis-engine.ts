@@ -1,7 +1,7 @@
-import pl from 'nodejs-polars';
+import Papa from 'papaparse';
 
 export interface DashboardConfig {
-    layout: string; // 'simple', 'ml', 'powerbi'
+    layout: string;
     kpis: {
         label: string;
         value: string | number;
@@ -13,9 +13,14 @@ export interface DashboardConfig {
         title: string;
         data: any[]; // Plotly data array
         layout: any; // Plotly layout object
-        gridPos?: { x: number; y: number; w: number; h: number }; // For PowerBI style grid
+        gridPos?: { x: number; y: number; w: number; h: number };
     }[];
     insights?: Insight[];
+    stats?: {
+        preview: any[];
+        columns: string[];
+        rowCount: number;
+    }
 }
 
 export interface Insight {
@@ -25,12 +30,49 @@ export interface Insight {
     severity: 'info' | 'warning' | 'positive';
 }
 
+// Simple helper types for our LightDataFrame
+type Row = Record<string, any>;
+interface LightDataFrame {
+    data: Row[];
+    columns: string[];
+    schema: Record<string, 'number' | 'string' | 'unknown'>;
+    height: number;
+    width: number;
+}
+
 export async function generateDashboard(
     csvContent: string,
     style: 'simple' | 'ml' | 'powerbi'
 ): Promise<DashboardConfig> {
-    // Load DataFrame
-    const df = pl.readCSV(csvContent, { ignoreErrors: true });
+
+    // Parse CSV with PapaParse
+    const parseResult = Papa.parse(csvContent, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true
+    });
+
+    const rows = parseResult.data as Row[];
+    const columns = parseResult.meta.fields || [];
+
+    // Infer Schema from first row
+    const schema: LightDataFrame['schema'] = {};
+    if (rows.length > 0) {
+        columns.forEach(col => {
+            const val = rows[0][col];
+            if (typeof val === 'number') schema[col] = 'number';
+            else if (typeof val === 'string') schema[col] = 'string';
+            else schema[col] = 'unknown';
+        });
+    }
+
+    const df: LightDataFrame = {
+        data: rows,
+        columns,
+        schema,
+        height: rows.length,
+        width: columns.length
+    };
 
     const insights = generateInsights(df);
 
@@ -50,66 +92,50 @@ export async function generateDashboard(
     }
 
     config.insights = insights;
+
+    // Add raw stats for the client-side engine
+    config.stats = {
+        preview: rows.slice(0, 100), // Send first 100 rows for preview/client processing
+        columns: columns,
+        rowCount: rows.length
+    };
+
     return config;
 }
 
-function generateSimpleDashboard(df: pl.DataFrame): DashboardConfig {
-    const rowCount = df.height;
-    const colCount = df.width;
-
-    // 1. Identify Numeric and Categorical Columns
-    // Polars TS types might need helper checks, basic approach:
-    // We'll trust schema inspection.
-    // NOTE: nodejs-polars schema returns DataType objects.
-
-    // Simplified KPI: Total Rows
+function generateSimpleDashboard(df: LightDataFrame): DashboardConfig {
     const kpis = [
-        { label: "Total Rows", value: rowCount.toLocaleString() },
-        { label: "Total Columns", value: colCount.toLocaleString() },
+        { label: "Total Rows", value: df.height.toLocaleString() },
+        { label: "Total Columns", value: df.width.toLocaleString() },
     ];
 
     const charts: DashboardConfig['charts'] = [];
 
-    // 2. Find first categorical column for a Bar Chart (Count by Category)
-    // We iterate columns and check type.
-    // Since strict type checking on schema can be verbose, we'll try to guess strings.
-    // Or just grab the first column that looks like a string/category.
-
-    // For now, let's take the *first* string column we find.
-    let catCol = "";
-    for (const name of df.columns) {
-        // Simple heuristic: check if first value is string
-        // This is not perfect but fast for MVP without complex schema parsing logic overhead
-        // Better: df.schema[name]
-        try {
-            // Basic safe check
-            const dtype = df.schema[name];
-            if (dtype.toString() === 'Utf8') { // 'Utf8' is the string type in Polars
-                catCol = name;
-                break;
-            }
-        } catch (e) { }
-    }
+    // 1. Find categorical column for Bar Chart
+    const catCol = df.columns.find(col => df.schema[col] === 'string');
 
     if (catCol) {
-        // Count Values: df.groupBy(col).agg(pl.count())
-        const counts = df.groupBy(catCol)
-            .agg(pl.count(catCol).alias("count"))
-            .sort("count", true)
-            .head(10);
+        // Count values
+        const counts: Record<string, number> = {};
+        df.data.forEach(row => {
+            const val = String(row[catCol]);
+            counts[val] = (counts[val] || 0) + 1;
+        });
 
-        const xRaw = counts.getColumn(catCol).toArray();
-        const yRaw = counts.getColumn("count").toArray();
+        // Sort by count desc and take top 10
+        const sortedCounts = Object.entries(counts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 10);
 
         charts.push({
             id: 'chart-1',
             type: 'bar',
             title: `Top 10 ${catCol}`,
             data: [{
-                x: xRaw,
-                y: yRaw,
+                x: sortedCounts.map(([k]) => k),
+                y: sortedCounts.map(([, v]) => v),
                 type: 'bar',
-                marker: { color: '#5e30eb' } // Brand purple
+                marker: { color: '#5e30eb' }
             }],
             layout: {
                 xaxis: { title: catCol },
@@ -118,20 +144,11 @@ function generateSimpleDashboard(df: pl.DataFrame): DashboardConfig {
         });
     }
 
-    // 3. Find first numerical column for a Histogram
-    let numCol = "";
-    for (const name of df.columns) {
-        try {
-            const dtype = df.schema[name].toString();
-            if (['Float32', 'Float64', 'Int32', 'Int64'].some(t => dtype.includes(t))) {
-                numCol = name;
-                break;
-            }
-        } catch (e) { }
-    }
+    // 2. Find numeric column for Histogram
+    const numCol = df.columns.find(col => df.schema[col] === 'number');
 
     if (numCol) {
-        const values = df.getColumn(numCol).toArray();
+        const values = df.data.map(row => row[numCol]).filter(v => typeof v === 'number');
         charts.push({
             id: 'chart-2',
             type: 'histogram',
@@ -139,7 +156,7 @@ function generateSimpleDashboard(df: pl.DataFrame): DashboardConfig {
             data: [{
                 x: values,
                 type: 'histogram',
-                marker: { color: '#52d6fc' } // Brand blue
+                marker: { color: '#52d6fc' }
             }],
             layout: {
                 xaxis: { title: numCol },
@@ -151,34 +168,17 @@ function generateSimpleDashboard(df: pl.DataFrame): DashboardConfig {
     return { layout: 'simple', kpis, charts };
 }
 
-function generateMLDashboard(df: pl.DataFrame): DashboardConfig {
-    const rowCount = df.height;
-
-    // Mock ML Logic for MVP - ideally we compute Correlation Matrix here
-    // Calculating correlation in Polars:
-    // Select numeric columns -> df.select(pl.col(numeric_cols)).corr()
-
-    // Identify numeric columns
-    const numericCols = df.columns.filter(name => {
-        const dtype = df.schema[name].toString();
-        return ['Float32', 'Float64', 'Int32', 'Int64'].some(t => dtype.includes(t));
-    });
-
+function generateMLDashboard(df: LightDataFrame): DashboardConfig {
+    // Mock ML Logic
+    const numericCols = df.columns.filter(col => df.schema[col] === 'number');
     const charts: DashboardConfig['charts'] = [];
 
-    // Correlation Heatmap (if > 1 numeric col)
     if (numericCols.length > 1) {
-        // Note: nodejs-polars might not have direct .corr() on DataFrame in all versions, 
-        // fallback or use manual checking if needed. Assuming standard API.
-        // Actually, getting full correlation matrix can be tricky in JS Polars directly returning a matrix.
-        // Let's implement a simplified correlation computation or just mock if complex.
-        // For MVP phase 4, let's try to grab a scatter plot of first two numeric columns.
-
         const col1 = numericCols[0];
         const col2 = numericCols[1];
 
-        const x = df.getColumn(col1).toArray();
-        const y = df.getColumn(col2).toArray();
+        const x = df.data.map(r => r[col1]);
+        const y = df.data.map(r => r[col2]);
 
         charts.push({
             id: 'ml-scatter',
@@ -189,7 +189,7 @@ function generateMLDashboard(df: pl.DataFrame): DashboardConfig {
                 y: y,
                 mode: 'markers',
                 type: 'scatter',
-                marker: { color: '#d946ef', opacity: 0.6 } // ML Purple/Pink
+                marker: { color: '#d946ef', opacity: 0.6 }
             }],
             layout: {
                 xaxis: { title: col1 },
@@ -201,30 +201,23 @@ function generateMLDashboard(df: pl.DataFrame): DashboardConfig {
     return {
         layout: 'ml',
         kpis: [
-            { label: "Dataset Size", value: rowCount },
+            { label: "Dataset Size", value: df.height },
             { label: "Features", value: df.width }
         ],
         charts
     };
 }
 
-function generatePowerBIDashboard(df: pl.DataFrame): DashboardConfig {
-    // Generate standard charts but with specific grid positions for "Dense" layout
+function generatePowerBIDashboard(df: LightDataFrame): DashboardConfig {
     const simple = generateSimpleDashboard(df);
 
-    // Enrich layout for "Professional" look
-    // Add grid positions (x, y, w, h) based on React-Grid-Layout logic effectively
-    // We will just map them and add a couple more cuts if possible
-
+    // Grid enrichment
     const enrichedCharts = simple.charts.map((c, i) => ({
         ...c,
         gridPos: i === 0
-            ? { x: 0, y: 0, w: 6, h: 4 } // Top Left
-            : { x: 6, y: 0, w: 6, h: 4 } // Top Right
+            ? { x: 0, y: 0, w: 6, h: 4 }
+            : { x: 6, y: 0, w: 6, h: 4 }
     }));
-
-    // Todo: Add a Pie chart if categorical exists
-    // (Extending logic effectively similar to Simple but styled differently in frontend)
 
     return {
         layout: 'powerbi',
@@ -233,50 +226,47 @@ function generatePowerBIDashboard(df: pl.DataFrame): DashboardConfig {
     };
 }
 
-function generateInsights(df: pl.DataFrame): Insight[] {
+function generateInsights(df: LightDataFrame): Insight[] {
     const insights: Insight[] = [];
-    const numericCols = df.columns.filter(name => {
-        try {
-            const dtype = df.schema[name].toString();
-            return ['Float32', 'Float64', 'Int32', 'Int64'].some(t => dtype.includes(t));
-        } catch { return false; }
-    });
+    const numericCols = df.columns.filter(col => df.schema[col] === 'number');
 
-    // 1. Detect Outliers (Values > 2 std dev from mean)
-    // Simplified: Check max vs mean
+    // 1. Detect Outliers (> 3 std dev)
     for (const col of numericCols) {
-        try {
-            const series = df.getColumn(col);
-            const mean = series.mean();
-            const std = ((series as any).std() || 0);
-            const max = series.max();
-            const min = series.min();
+        const values = df.data.map(r => r[col]).filter(v => typeof v === 'number');
+        if (values.length === 0) continue;
 
-            if (std > 0) {
-                const zScoreMax = (max - mean) / std;
-                if (zScoreMax > 3) {
-                    insights.push({
-                        type: 'outlier',
-                        title: `Extreme Value in ${col}`,
-                        description: `The maximum value (${max.toFixed(2)}) is significantly higher (> 3σ) than the average (${mean.toFixed(2)}).`,
-                        severity: 'warning'
-                    });
-                }
+        const sum = values.reduce((a, b) => a + b, 0);
+        const mean = sum / values.length;
+        const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+        const std = Math.sqrt(variance);
+        const max = Math.max(...values);
+
+        if (std > 0) {
+            const zScoreMax = (max - mean) / std;
+            if (zScoreMax > 3) {
+                insights.push({
+                    type: 'outlier',
+                    title: `Extreme Value in ${col}`,
+                    description: `The maximum value (${max.toFixed(2)}) is significantly higher (> 3σ) than the average (${mean.toFixed(2)}).`,
+                    severity: 'warning'
+                });
             }
-        } catch (e) { }
+        }
     }
 
-    // 2. Simple Trend Detection (Compare first half vs second half average)
+    // 2. Simple Trend (First half vs Second half)
     for (const col of numericCols) {
-        try {
-            const series = df.getColumn(col);
-            if (series.length > 10) {
-                const half = Math.floor(series.length / 2);
-                const firstHalf = series.slice(0, half).mean();
-                const secondHalf = series.slice(half, series.length - half).mean();
+        const values = df.data.map(r => r[col]).filter(v => typeof v === 'number');
+        if (values.length > 10) {
+            const half = Math.floor(values.length / 2);
+            const firstHalf = values.slice(0, half);
+            const secondHalf = values.slice(half);
 
-                const percentChange = ((secondHalf - firstHalf) / firstHalf) * 100;
+            const mean1 = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+            const mean2 = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
 
+            if (mean1 !== 0) {
+                const percentChange = ((mean2 - mean1) / mean1) * 100;
                 if (Math.abs(percentChange) > 20) {
                     insights.push({
                         type: 'trend',
@@ -286,18 +276,17 @@ function generateInsights(df: pl.DataFrame): Insight[] {
                     });
                 }
             }
-        } catch (e) { }
+        }
     }
 
-    // Fallback if no insights
     if (insights.length === 0) {
         insights.push({
             type: 'general',
             title: 'Consistent Data',
-            description: 'No significant outliers or strong trends detected. The data appears stable.',
+            description: 'No significant outliers or strong trends detected.',
             severity: 'info'
         });
     }
 
-    return insights.slice(0, 5); // Limit to top 5
+    return insights.slice(0, 5);
 }

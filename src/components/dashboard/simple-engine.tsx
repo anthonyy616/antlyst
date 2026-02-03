@@ -33,6 +33,33 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
     // Initialize with yKey (and maybe xKey if it makes sense, but usually stats are for numeric)
     const [statKeys, setStatKeys] = useState<string[]>([]);
 
+    // Sorting State for Data Preview
+    const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
+
+    const sortedData = useMemo(() => {
+        if (!sortConfig) return data;
+
+        return [...data].sort((a, b) => {
+            const valA = a[sortConfig.key];
+            const valB = b[sortConfig.key];
+
+            if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [data, sortConfig]);
+
+    const handleSort = (key: string) => {
+        setSortConfig(current => {
+            if (current?.key === key) {
+                return current.direction === 'asc'
+                    ? { key, direction: 'desc' }
+                    : null;
+            }
+            return { key, direction: 'asc' };
+        });
+    };
+
     useEffect(() => {
         // Reset or init stat keys when columns change
         if (numericColumns.length > 0) {
@@ -69,20 +96,14 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
     const chartData = useMemo(() => {
         if (!xKey || !yKey) return [];
 
-        // Check if aggregation is needed (if X is categorical/string)
-        // If X is numeric, we might just want to sort by X.
+        // Check if X is numeric
         const isXNumeric = typeof data[0]?.[xKey] === 'number';
 
-        if (isXNumeric) {
-            // Just sort numerical X axis
-            return [...data].sort((a, b) => (a[xKey] as number) - (b[xKey] as number));
-        }
-
-        // Categorical or Dates: Group and Sum
+        // Always Group and Sum, even for numeric X (to handle duplicates like Age 18 appearing multiple times)
         const groups: Record<string, { sum: number, count: number }> = {};
 
         data.forEach((row: any) => {
-            const key = String(row[xKey]); // Ensure string key
+            const key = String(row[xKey]); // Ensure string key for grouping
             const val = Number(row[yKey]) || 0;
 
             if (!groups[key]) {
@@ -93,12 +114,21 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
         });
 
         // Convert back to array
-        return Object.entries(groups).map(([name, stats]) => ({
-            [xKey]: name,
-            [yKey]: stats.sum, // Default to Sum for bar/line charts usually
+        const aggregated = Object.entries(groups).map(([name, stats]) => ({
+            [xKey]: isXNumeric ? Number(name) : name, // Convert back to number if it was numeric
+            [yKey]: stats.sum,
             _count: stats.count,
             _avg: stats.sum / stats.count
-        })).sort((a, b) => (b[yKey] as number) - (a[yKey] as number)); // Sort desc by value for cleaner count charts
+        }));
+
+        // Sort based on X type
+        if (isXNumeric) {
+            // For numeric X (e.g. Age, Year), sort by X ascending
+            return aggregated.sort((a, b) => (a[xKey] as number) - (b[xKey] as number));
+        } else {
+            // For categorical X (e.g. Country), sort by Y descending (Top items first)
+            return aggregated.sort((a, b) => (b[yKey] as number) - (a[yKey] as number));
+        }
 
     }, [data, xKey, yKey]);
 
@@ -298,12 +328,28 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                             <TableHeader>
                                 <TableRow>
                                     {columns.map((col: string) => (
-                                        <TableHead key={col}>{col}</TableHead>
+                                        <TableHead
+                                            key={col}
+                                            className="cursor-pointer hover:bg-slate-50 transition-colors select-none"
+                                            onClick={() => handleSort(col)}
+                                        >
+                                            <div className="flex items-center gap-1">
+                                                {col}
+                                                {sortConfig?.key === col && (
+                                                    <span className="text-brand-purple">
+                                                        {sortConfig.direction === 'asc' ? '↑' : '↓'}
+                                                    </span>
+                                                )}
+                                                {sortConfig?.key !== col && (
+                                                    <span className="text-slate-300 opacity-0 group-hover:opacity-100">↕</span>
+                                                )}
+                                            </div>
+                                        </TableHead>
                                     ))}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {data.slice(0, 50).map((row: any, i: number) => (
+                                {sortedData.slice(0, 50).map((row: any, i: number) => (
                                     <TableRow key={i}>
                                         {columns.map((col: string) => (
                                             <TableCell key={`${i}-${col}`}>
