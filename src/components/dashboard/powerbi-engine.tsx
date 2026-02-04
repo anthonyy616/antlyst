@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import { Responsive, WidthProvider } from 'react-grid-layout';
+import { useMemo, useState, useEffect, useRef } from 'react';
+import { Responsive } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
@@ -10,6 +10,42 @@ import { PieChartWidget } from './widgets/PieChartWidget';
 import { TrendChart } from './widgets/TrendChart';
 import { DataTable } from './widgets/DataTable';
 import { Card, CardContent } from '@/components/ui/card';
+
+// Simplified WidthProvider alternative using ResizeObserver
+const WidthProvider = (ComposedComponent: any) => {
+    return (props: any) => {
+        const [width, setWidth] = useState(1200);
+        const elementRef = useRef<HTMLDivElement>(null);
+        const mounted = useRef(false);
+
+        useEffect(() => {
+            mounted.current = true;
+            const resizeObserver = new ResizeObserver((entries) => {
+                if (!mounted.current) return;
+                for (const entry of entries) {
+                    setWidth(entry.contentRect.width);
+                }
+            });
+
+            if (elementRef.current) {
+                resizeObserver.observe(elementRef.current);
+                // Initial set
+                setWidth(elementRef.current.offsetWidth);
+            }
+
+            return () => {
+                mounted.current = false;
+                resizeObserver.disconnect();
+            };
+        }, []);
+
+        return (
+            <div ref={elementRef} className="w-full h-full">
+                <ComposedComponent {...props} width={width} />
+            </div>
+        );
+    };
+};
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 

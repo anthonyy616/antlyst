@@ -48,7 +48,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-dropzone": "^14.3.8",
-    "react-grid-layout": "^2.2.2",
+    "react-grid-layout": "^1.5.3",
     "react-plotly.js": "^2.6.0",
     "recharts": "^3.4.1",
     "svix": "^1.81.0",
