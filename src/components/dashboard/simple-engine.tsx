@@ -3,23 +3,17 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import dynamic from 'next/dynamic';
-
-const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false });
-const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false });
-const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false });
-const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false });
-const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false });
-const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false });
-const Legend = dynamic(() => import('recharts').then(mod => mod.Legend), { ssr: false });
-const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false });
-const LineChart = dynamic(() => import('recharts').then(mod => mod.LineChart), { ssr: false });
-const Line = dynamic(() => import('recharts').then(mod => mod.Line), { ssr: false });
-const Brush = dynamic(() => import('recharts').then(mod => mod.Brush), { ssr: false });
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Plus, X, BarChart3 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+// Dynamically import Plotly
+const Plot = dynamic(() => import('react-plotly.js'), {
+    ssr: false,
+    loading: () => <div className="h-full w-full flex items-center justify-center text-muted-foreground">Loading Chart Engine...</div>
+});
 
 interface SimpleEngineProps {
     analysisResult: any;
@@ -42,8 +36,7 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
     const [yKey, setYKey] = useState<string>(numericColumns[0] || columns[1]);
     const [aggType, setAggType] = useState<'sum' | 'avg' | 'min' | 'max' | 'count'>('avg');
 
-    // Stats Selection State: Allows multiple columns to be analyzed independently
-    // Initialize with yKey (and maybe xKey if it makes sense, but usually stats are for numeric)
+    // Stats Selection State
     const [statKeys, setStatKeys] = useState<string[]>([]);
 
     // Sorting State for Data Preview
@@ -52,7 +45,7 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
     const sortedData = useMemo(() => {
         if (!sortConfig) return data;
 
-        return [...data].sort((a, b) => {
+        return [...data].sort((a: any, b: any) => {
             const valA = a[sortConfig.key];
             const valB = b[sortConfig.key];
 
@@ -76,7 +69,6 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
     useEffect(() => {
         // Reset or init stat keys when columns change
         if (numericColumns.length > 0) {
-            // Default to showing stats for the Y-Axis variable if it's numeric
             if (numericColumns.includes(yKey)) {
                 setStatKeys([yKey]);
             } else {
@@ -98,9 +90,7 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
             const max = Math.max(...numericValues);
             return { type: 'numeric', sum, avg, min, max, count: numericValues.length };
         } else {
-            // Categorical Stats
             const unique = new Set(values).size;
-            // Mode?
             return { type: 'categorical', count: values.length, unique };
         }
     };
@@ -109,14 +99,11 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
     const chartData = useMemo(() => {
         if (!xKey || !yKey) return [];
 
-        // Check if X is numeric
         const isXNumeric = typeof data[0]?.[xKey] === 'number';
-
-        // Grouping
         const groups: Record<string, { sum: number, count: number, min: number, max: number }> = {};
 
         data.forEach((row: any) => {
-            const key = String(row[xKey]); // Ensure string key for grouping
+            const key = String(row[xKey]);
             const val = Number(row[yKey]) || 0;
 
             if (!groups[key]) {
@@ -140,21 +127,20 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
             }
 
             return {
-                [xKey]: isXNumeric ? Number(name) : name,
-                [yKey]: value,
-                _count: stats.count,
-                _sum: stats.sum,
-                _avg: stats.sum / stats.count,
-                _min: stats.min,
-                _max: stats.max
+                x: isXNumeric ? Number(name) : name,
+                y: value,
+                // Extra meta for hover if needed
+                count: stats.count,
+                sum: stats.sum,
+                avg: stats.sum / stats.count
             };
         });
 
-        // Sort based on X type
+        // Sort
         if (isXNumeric) {
-            return aggregated.sort((a, b) => (a[xKey] as number) - (b[xKey] as number));
+            return aggregated.sort((a, b) => (a.x as number) - (b.x as number));
         } else {
-            return aggregated.sort((a, b) => (b[yKey] as number) - (a[yKey] as number));
+            return aggregated.sort((a, b) => (b.y as number) - (a.y as number));
         }
 
     }, [data, xKey, yKey, aggType]);
@@ -167,6 +153,39 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
 
     const removeStatKey = (key: string) => {
         setStatKeys(statKeys.filter(k => k !== key));
+    };
+
+    // Format data for Plotly
+    const plotlyDataBar = useMemo(() => {
+        return [{
+            x: chartData.map(d => d.x),
+            y: chartData.map(d => d.y),
+            type: 'bar',
+            marker: { color: '#5e30eb' },
+        }] as any;
+    }, [chartData]);
+
+    const plotlyDataLine = useMemo(() => {
+        return [{
+            x: chartData.map(d => d.x),
+            y: chartData.map(d => d.y),
+            type: 'scatter',
+            mode: 'lines+markers',
+            marker: { color: '#52d6fc', size: 6 },
+            line: { width: 3 }
+        }] as any;
+    }, [chartData]);
+
+    const commonLayout = {
+        width: undefined,
+        height: undefined,
+        autosize: true,
+        margin: { l: 50, r: 20, t: 20, b: 50 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#71717a' }, // zinc-500
+        xaxis: { title: { text: xKey } },
+        yaxis: { title: { text: `${aggType} of ${yKey}` } }
     };
 
     return (
@@ -194,7 +213,6 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                         <label className="text-sm font-medium mb-1 block">Y Axis (Value)</label>
                         <Select value={yKey} onValueChange={(val) => {
                             setYKey(val);
-                            // Optionally auto-add this to stats checking if the user wants that context switch
                             if (!statKeys.includes(val) && numericColumns.includes(val)) {
                                 setStatKeys(prev => [...prev, val]);
                             }
@@ -233,20 +251,21 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                         <CardTitle>Bar Chart ({aggType === 'avg' ? 'Average' : aggType.charAt(0).toUpperCase() + aggType.slice(1)} of {yKey} by {xKey})</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[400px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                                <XAxis dataKey={xKey} tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                    cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                                />
-                                <Legend />
-                                <Brush dataKey={xKey} height={30} stroke="#8884d8" />
-                                <Bar dataKey={yKey} fill="#5e30eb" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        <Plot
+                            data={plotlyDataBar}
+                            layout={{
+                                ...commonLayout,
+                                yaxis: { title: { text: `${aggType} of ${yKey}` } } // Ensure title updates
+                            }}
+                            config={{
+                                scrollZoom: true,
+                                displayModeBar: true,
+                                responsive: true,
+                                displaylogo: false
+                            }}
+                            style={{ width: '100%', height: '100%' }}
+                            useResizeHandler={true}
+                        />
                     </CardContent>
                 </Card>
 
@@ -255,19 +274,21 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                         <CardTitle>Line Chart (Trend of {yKey} - {aggType})</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[400px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                                <XAxis dataKey={xKey} tick={{ fontSize: 12 }} />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                />
-                                <Legend />
-                                <Brush dataKey={xKey} height={30} stroke="#8884d8" />
-                                <Line type="monotone" dataKey={yKey} stroke="#52d6fc" strokeWidth={3} dot={{ strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} />
-                            </LineChart>
-                        </ResponsiveContainer>
+                        <Plot
+                            data={plotlyDataLine}
+                            layout={{
+                                ...commonLayout,
+                                yaxis: { title: { text: `${aggType} of ${yKey}` } }
+                            }}
+                            config={{
+                                scrollZoom: true,
+                                displayModeBar: true,
+                                responsive: true,
+                                displaylogo: false
+                            }}
+                            style={{ width: '100%', height: '100%' }}
+                            useResizeHandler={true}
+                        />
                     </CardContent>
                 </Card>
             </div>

@@ -42,7 +42,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
     const channelId = activeOrg ? `org-${activeOrg.id}-general` : '';
 
     return (
-        <div className="container py-4 max-w-6xl mx-auto h-[calc(100vh-80px)] flex flex-col md:flex-row gap-4">
+        <div className="container py-4 max-w-6xl mx-auto h-[calc(100dvh-120px)] flex flex-col md:flex-row gap-4">
             {/* Org Sidebar / Switcher */}
             <div className="w-full md:w-64 flex flex-col gap-2 shrink-0">
                 <h2 className="text-xl font-bold mb-2 hidden md:block">Organizations</h2>

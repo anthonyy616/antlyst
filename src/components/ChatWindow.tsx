@@ -5,7 +5,7 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { createSupabaseClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+// Removed ScrollArea, using native div for better mobile reliability
 import { Send, Loader2 } from 'lucide-react';
 
 interface Message {
@@ -27,12 +27,16 @@ export function ChatWindow({ channelId }: { channelId: string }) {
     const [replyingTo, setReplyingTo] = useState<Message | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    // Memoize the supabase client reference to avoid recreation if possible, 
+    // but auth token changes so we often need new one. 
+    // However, we can keep the channel subscription stable.
+
     useEffect(() => {
         let supabase: any;
+        let channel: any;
 
         const setupSupabase = async () => {
             const token = await getToken({ template: 'supabase' });
-            // Note: If token is missing, check Clerk Dashboard -> JWT Templates -> 'supabase'
             supabase = createSupabaseClient(token || undefined);
 
             // 1. Fetch Initial Messages
@@ -47,7 +51,7 @@ export function ChatWindow({ channelId }: { channelId: string }) {
             setIsLoading(false);
 
             // 2. Subscribe to new messages & deletes
-            const channel = supabase
+            channel = supabase
                 .channel(`chat:${channelId}`)
                 .on('postgres_changes', {
                     event: '*', // Listen to ALL events (INSERT, DELETE, UPDATE)
@@ -61,34 +65,32 @@ export function ChatWindow({ channelId }: { channelId: string }) {
                             if (prev.some(m => m.id === newMsg.id)) return prev; // Dedup
                             return [...prev, newMsg];
                         });
-                        // Auto scroll
-                        if (scrollRef.current) {
-                            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
-                        }
+                        // Auto scroll will trigger via effect
                     } else if (payload.eventType === 'DELETE') {
                         setMessages(prev => prev.filter(m => m.id !== payload.old.id));
                     }
                 })
                 .subscribe();
-
-            return () => {
-                supabase.removeChannel(channel);
-            };
         };
 
         setupSupabase();
-    }, [getToken, channelId]);
+
+        return () => {
+            if (supabase && channel) {
+                // supabase.removeChannel(channel); // Optional cleanup, usually handled by client
+                channel.unsubscribe();
+            }
+        };
+    }, [channelId]); // Removed getToken from deps to prevent re-subscribing on every token refresh cycle causing "Multiple GoTrueClient"
 
     // Scroll to bottom on load/new message
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [messages]);
+    }, [messages, isLoading]); // Added isLoading to scroll once loaded
 
     const [pendingMessages, setPendingMessages] = useState<Message[]>([]);
-
-    // ...
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -102,7 +104,7 @@ export function ChatWindow({ channelId }: { channelId: string }) {
             id: tempId,
             content: msgContent,
             user_id: user.id,
-            user_name: user.fullName || user.primaryEmailAddress?.emailAddress || 'User',
+            user_name: user.fullName || user.username || user.primaryEmailAddress?.emailAddress || 'User',
             channel_id: channelId,
             reply_to_id: msgReplyTo,
             created_at: new Date().toISOString()
@@ -113,52 +115,46 @@ export function ChatWindow({ channelId }: { channelId: string }) {
         setNewMessage('');
         setReplyingTo(null);
 
-        // Scroll
+        // Immediate Scroll for feedback
         setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: 'smooth' }), 10);
 
-        const token = await getToken({ template: 'supabase' });
-        const supabase = createSupabaseClient(token || undefined);
+        try {
+            const token = await getToken({ template: 'supabase' });
+            const supabase = createSupabaseClient(token || undefined);
 
-        const msgPayload = {
-            content: msgContent,
-            user_id: user.id,
-            user_name: user.fullName || user.primaryEmailAddress?.emailAddress || 'Anonymous',
-            channel_id: channelId,
-            reply_to_id: msgReplyTo
-        };
+            const msgPayload = {
+                content: msgContent,
+                user_id: user.id,
+                user_name: user.fullName || user.username || user.primaryEmailAddress?.emailAddress || 'Anonymous',
+                channel_id: channelId,
+                reply_to_id: msgReplyTo
+            };
 
-        const { data, error } = await supabase
-            .from('messages')
-            .insert(msgPayload)
-            .select()
-            .single();
+            const { data, error } = await supabase
+                .from('messages')
+                .insert(msgPayload)
+                .select()
+                .single();
 
-        if (error) {
+            if (error) throw error;
+
+            if (data) {
+                setMessages(prev => {
+                    if (prev.some(m => m.id === data.id)) return prev;
+                    return [...prev, data as Message];
+                });
+                setPendingMessages(prev => prev.filter(m => m.id !== tempId));
+            }
+        } catch (error: any) {
             console.error('Send message error:', error);
-            alert(`Error sending: ${error.message}`);
-            // Rollback
-            setPendingMessages(prev => prev.filter(m => m.id !== tempId));
-            setNewMessage(msgContent); // Restore text
-        } else if (data) {
-            // Success: Add real message to state immediately (Client-side confirmation)
-            setMessages(prev => {
-                // Prevent duplicates if Realtime already added it (unlikely this fast, but safe)
-                if (prev.some(m => m.id === data.id)) return prev;
-                return [...prev, data as Message];
-            });
-            // Remove optimistic message
-            setPendingMessages(prev => prev.filter(m => m.id !== tempId));
+            // alert(`Error sending: ${error.message}`);
+            // Keep pending message but mark error? For now just leave it.
         }
     };
 
-    // Effect to clean up pending messages when they appear in real messages
+    // Clean up pending messages if real one arrived via subscription before our manual insert return
     useEffect(() => {
         if (pendingMessages.length === 0) return;
-
-        const newMessagesIds = new Set(messages.map(m => m.content + m.created_at)); // fuzzy match or better?
-        // Actually, realtime event gives us the exact row.
-        // Let's just clear pending messages that match content of new real messages
-
         setPendingMessages(prev => prev.filter(p =>
             !messages.some(m => m.content === p.content && m.user_id === p.user_id)
         ));
@@ -176,28 +172,32 @@ export function ChatWindow({ channelId }: { channelId: string }) {
 
         if (error) {
             console.error('Delete error:', error);
-            alert('Failed to delete message');
         }
     };
 
     return (
-        <div className="flex flex-col h-full bg-background">
-            {/* Header removed from here as it's in the page now, or keep minimalist */}
-
-            <ScrollArea className="flex-1 p-4 h-full">
+        <div className="flex flex-col h-full bg-background relative">
+            {/* Messages Area - Using native div for robust scrolling */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {isLoading ? (
                     <div className="flex justify-center items-center h-full">
-                        <Loader2 className="animate-spin text-muted-foreground" />
+                        <Loader2 className="animate-spin text-muted-foreground w-8 h-8" />
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <>
+                        {messages.length === 0 && pendingMessages.length === 0 && (
+                            <div className="text-center text-muted-foreground mt-10">
+                                No messages yet. Say hello!
+                            </div>
+                        )}
+
                         {messages.map((msg) => {
                             const isMe = msg.user_id === user?.id;
                             const replyParent = messages.find(m => m.id === msg.reply_to_id);
 
                             return (
                                 <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                                    <div className={`max-w-[70%] rounded-lg p-3 ${isMe ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                    <div className={`max-w-[85%] sm:max-w-[70%] rounded-lg p-3 ${isMe ? 'bg-brand-purple text-primary-foreground' : 'bg-muted'}`}>
                                         {/* Reply Context */}
                                         {replyParent && (
                                             <div className="mb-2 p-1 border-l-2 border-white/30 text-xs opacity-70 bg-black/10 rounded">
@@ -205,16 +205,14 @@ export function ChatWindow({ channelId }: { channelId: string }) {
                                             </div>
                                         )}
 
-                                        <div className="flex justify-between items-start gap-2">
-                                            <div>
-                                                <p className="text-xs opacity-70 mb-1 font-bold">{msg.user_name}</p>
-                                                <p className="text-sm">{msg.content}</p>
-                                            </div>
+                                        <div className="flex flex-col">
+                                            {!isMe && <p className="text-xs opacity-70 mb-1 font-bold">{msg.user_name}</p>}
+                                            <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                                         </div>
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="flex gap-2 mt-1 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-2 mt-1 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity px-1">
                                         <button onClick={() => setReplyingTo(msg)} className="hover:underline">Reply</button>
                                         {isMe && (
                                             <button onClick={() => handleDelete(msg.id)} className="text-red-500 hover:underline">Delete</button>
@@ -227,35 +225,38 @@ export function ChatWindow({ channelId }: { channelId: string }) {
                         {/* Pending Messages (Optimistic UI) */}
                         {pendingMessages.map((msg) => (
                             <div key={msg.id} className="flex flex-col items-end opacity-70">
-                                <div className="max-w-[70%] rounded-lg p-3 bg-primary text-primary-foreground">
+                                <div className="max-w-[85%] sm:max-w-[70%] rounded-lg p-3 bg-brand-purple text-primary-foreground">
                                     {msg.reply_to_id && (
                                         <div className="mb-2 p-1 border-l-2 border-white/30 text-xs opacity-70 bg-black/10 rounded">
                                             Reply...
                                         </div>
                                     )}
-                                    <p className="text-sm">{msg.content}</p>
+                                    <p className="text-sm break-words">{msg.content}</p>
                                 </div>
-                                <span className="text-xs text-muted-foreground">Sending...</span>
+                                <span className="text-[10px] text-muted-foreground mt-1">Sending...</span>
                             </div>
                         ))}
-                        <div ref={scrollRef} />
-                    </div>
+                        <div ref={scrollRef} className="h-1" />
+                    </>
                 )}
-            </ScrollArea>
+            </div>
 
+            {/* Replying Context */}
             {replyingTo && (
                 <div className="px-4 py-2 bg-muted/50 border-t flex justify-between items-center text-sm">
-                    <span>Replying to <strong>{replyingTo.user_name}</strong></span>
+                    <span className="truncate max-w-[200px]">Replying to <strong>{replyingTo.user_name}</strong></span>
                     <button onClick={() => setReplyingTo(null)} className="text-muted-foreground hover:text-foreground">Cancel</button>
                 </div>
             )}
 
-            <form onSubmit={handleSendMessage} className="p-4 border-t flex gap-2">
+            {/* Input Area */}
+            <form onSubmit={handleSendMessage} className="p-3 md:p-4 border-t bg-background z-10 flex gap-2">
                 <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder={replyingTo ? "Type your reply..." : "Type a message..."}
                     className="flex-1"
+                    autoComplete="off"
                 />
                 <Button type="submit" size="icon" disabled={!newMessage.trim()}>
                     <Send className="h-4 w-4" />

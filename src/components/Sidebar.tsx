@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { BarChart3, Users, MessageSquare, LayoutDashboard, FolderKanban, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { useState } from 'react';
 import { useSidebar } from '@/context/SidebarContext';
 
@@ -100,6 +100,7 @@ export function MobileSidebar() {
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 bg-slate-900 border-none text-white w-72">
+                <SheetTitle className="sr-only">Sidebar</SheetTitle>
                 <Sidebar forceExpand={true} />
             </SheetContent>
         </Sheet>
