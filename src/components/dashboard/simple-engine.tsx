@@ -40,6 +40,7 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
     // Initial Defaults
     const [xKey, setXKey] = useState<string>(stringColumns[0] || columns[0]);
     const [yKey, setYKey] = useState<string>(numericColumns[0] || columns[1]);
+    const [aggType, setAggType] = useState<'sum' | 'avg' | 'min' | 'max' | 'count'>('avg');
 
     // Stats Selection State: Allows multiple columns to be analyzed independently
     // Initialize with yKey (and maybe xKey if it makes sense, but usually stats are for numeric)
@@ -111,38 +112,52 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
         // Check if X is numeric
         const isXNumeric = typeof data[0]?.[xKey] === 'number';
 
-        // Always Group and Sum, even for numeric X (to handle duplicates like Age 18 appearing multiple times)
-        const groups: Record<string, { sum: number, count: number }> = {};
+        // Grouping
+        const groups: Record<string, { sum: number, count: number, min: number, max: number }> = {};
 
         data.forEach((row: any) => {
             const key = String(row[xKey]); // Ensure string key for grouping
             const val = Number(row[yKey]) || 0;
 
             if (!groups[key]) {
-                groups[key] = { sum: 0, count: 0 };
+                groups[key] = { sum: 0, count: 0, min: val, max: val };
             }
             groups[key].sum += val;
             groups[key].count += 1;
+            groups[key].min = Math.min(groups[key].min, val);
+            groups[key].max = Math.max(groups[key].max, val);
         });
 
         // Convert back to array
-        const aggregated = Object.entries(groups).map(([name, stats]) => ({
-            [xKey]: isXNumeric ? Number(name) : name, // Convert back to number if it was numeric
-            [yKey]: stats.sum,
-            _count: stats.count,
-            _avg: stats.sum / stats.count
-        }));
+        const aggregated = Object.entries(groups).map(([name, stats]) => {
+            let value = 0;
+            switch (aggType) {
+                case 'sum': value = stats.sum; break;
+                case 'avg': value = stats.sum / stats.count; break;
+                case 'min': value = stats.min; break;
+                case 'max': value = stats.max; break;
+                case 'count': value = stats.count; break;
+            }
+
+            return {
+                [xKey]: isXNumeric ? Number(name) : name,
+                [yKey]: value,
+                _count: stats.count,
+                _sum: stats.sum,
+                _avg: stats.sum / stats.count,
+                _min: stats.min,
+                _max: stats.max
+            };
+        });
 
         // Sort based on X type
         if (isXNumeric) {
-            // For numeric X (e.g. Age, Year), sort by X ascending
             return aggregated.sort((a, b) => (a[xKey] as number) - (b[xKey] as number));
         } else {
-            // For categorical X (e.g. Country), sort by Y descending (Top items first)
             return aggregated.sort((a, b) => (b[yKey] as number) - (a[yKey] as number));
         }
 
-    }, [data, xKey, yKey]);
+    }, [data, xKey, yKey, aggType]);
 
     const addStatKey = (key: string) => {
         if (!statKeys.includes(key)) {
@@ -194,13 +209,28 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                             </SelectContent>
                         </Select>
                     </div>
+                    <div className="w-[200px]">
+                        <label className="text-sm font-medium mb-1 block">Aggregation</label>
+                        <Select value={aggType} onValueChange={(val: any) => setAggType(val)}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Aggregation" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="sum">Sum</SelectItem>
+                                <SelectItem value="avg">Average</SelectItem>
+                                <SelectItem value="min">Minimum</SelectItem>
+                                <SelectItem value="max">Maximum</SelectItem>
+                                <SelectItem value="count">Count</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </CardContent>
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Bar Chart (Sum of {yKey} by {xKey})</CardTitle>
+                        <CardTitle>Bar Chart ({aggType === 'avg' ? 'Average' : aggType.charAt(0).toUpperCase() + aggType.slice(1)} of {yKey} by {xKey})</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[400px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -222,7 +252,7 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Line Chart (Trend of {yKey})</CardTitle>
+                        <CardTitle>Line Chart (Trend of {yKey} - {aggType})</CardTitle>
                     </CardHeader>
                     <CardContent className="h-[400px]">
                         <ResponsiveContainer width="100%" height="100%">
