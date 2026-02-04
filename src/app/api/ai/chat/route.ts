@@ -10,19 +10,39 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { message, context } = await req.json();
+        const { message, context, projectId } = await req.json();
 
-        // 1. Check Usage Limits (Phase C Enforcement Placeholder)
-        // In a real implementation with limits, we would count `tokensIn` and `tokensOut` 
-        // from `prisma.aIChatLog` for the current month and compare with Plan limits.
-        // For now, we just log it.
+        // Build system prompt based on context type
+        let systemPrompt: string;
 
-        const systemPrompt = `You are Antlyst AI, an expert data analyst. 
-        You are helpful, concise, and professional.
-        If provided, use the following data context to answer the user's question:
-        ${context ? JSON.stringify(context).slice(0, 10000) : 'No specific data context provided.'}
-        
-        Answer the user's question based on this data. If you cannot answer based on the data, say so.`;
+        if (context?.type === 'dashboard' && context?.formattedContext) {
+            // Project-specific analysis with dashboard data
+            systemPrompt = `You are Antlyst AI, an expert data analyst assistant. You are analyzing a specific project's dashboard data.
+
+## Your Role
+- Provide clear, actionable insights based on the dashboard data
+- Identify patterns, trends, anomalies, and correlations
+- Answer questions specifically about this dataset
+- Be concise but thorough
+- Use specific numbers and data points from the context when available
+- If asked about something not in the data, say so clearly
+
+## Project Context
+${context.formattedContext}
+
+## Response Guidelines
+- Use bullet points for clarity when listing insights
+- Reference specific column names and values
+- Highlight any concerning patterns or positive trends
+- Suggest follow-up analyses when relevant
+- Keep responses focused and under 500 words unless more detail is requested`;
+        } else {
+            // General data analysis assistant (no specific project)
+            systemPrompt = `You are Antlyst AI, an expert data analyst assistant.
+You help users understand data analysis concepts and provide general guidance.
+Since no specific project data is loaded, provide general advice about data analysis.
+If the user asks about specific data, suggest they select a project first.`;
+        }
 
         const completion = await groq.chat.completions.create({
             messages: [

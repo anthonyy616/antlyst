@@ -34,6 +34,7 @@
     "@types/papaparse": "^5.5.2",
     "@types/react-plotly.js": "^2.6.3",
     "@types/three": "^0.181.0",
+    "@upstash/redis": "^1.36.2",
     "@vercel/analytics": "^1.6.1",
     "autoprefixer": "^10.4.22",
     "class-variance-authority": "^0.7.1",

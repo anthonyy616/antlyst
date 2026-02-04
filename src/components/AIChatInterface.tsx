@@ -48,12 +48,12 @@ export function AIChatInterface({ contextData, contextDescription }: AIChatInter
         setInput('');
         setIsLoading(true);
 
-        // Prepare context (truncate if too large for simple demo)
-        // In prod, use RAG or smarter summarization
-        const contextPayload = contextData ? {
-            preview: Array.isArray(contextData) ? contextData.slice(0, 50) : contextData, // data preview
-            description: contextDescription
-        } : null;
+        // Prepare context - pass dashboard context directly if it has the expected structure
+        const contextPayload = contextData?.type === 'dashboard'
+            ? contextData  // Pass dashboard context directly (has type & formattedContext)
+            : contextData
+                ? { preview: Array.isArray(contextData) ? contextData.slice(0, 50) : contextData, description: contextDescription }
+                : null;
 
         try {
             const response = await fetch('/api/ai/chat', {
