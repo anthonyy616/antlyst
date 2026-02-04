@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Plus, X, BarChart3 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ChartEditor } from './ChartEditor';
 
 // Dynamically import Plotly
 const Plot = dynamic(() => import('react-plotly.js'), {
@@ -190,60 +191,23 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
 
     return (
         <div className="space-y-6">
+
             {/* Control Panel */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Chart Configuration</CardTitle>
-                </CardHeader>
-                <CardContent className="flex gap-4 flex-wrap">
-                    <div className="w-[200px]">
-                        <label className="text-sm font-medium mb-1 block">X Axis (Category)</label>
-                        <Select value={xKey} onValueChange={setXKey}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select X Axis" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {columns.map((c: string) => (
-                                    <SelectItem key={`x-${c}`} value={c}>{c}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="w-[200px]">
-                        <label className="text-sm font-medium mb-1 block">Y Axis (Value)</label>
-                        <Select value={yKey} onValueChange={(val) => {
-                            setYKey(val);
-                            if (!statKeys.includes(val) && numericColumns.includes(val)) {
-                                setStatKeys(prev => [...prev, val]);
-                            }
-                        }}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select Y Axis" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {numericColumns.map((c: string) => (
-                                    <SelectItem key={`y-${c}`} value={c}>{c}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="w-[200px]">
-                        <label className="text-sm font-medium mb-1 block">Aggregation</label>
-                        <Select value={aggType} onValueChange={(val: any) => setAggType(val)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select Aggregation" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="sum">Sum</SelectItem>
-                                <SelectItem value="avg">Average</SelectItem>
-                                <SelectItem value="min">Minimum</SelectItem>
-                                <SelectItem value="max">Maximum</SelectItem>
-                                <SelectItem value="count">Count</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </CardContent>
-            </Card>
+            <ChartEditor
+                columns={columns}
+                numericColumns={numericColumns}
+                xKey={xKey}
+                yKey={yKey}
+                aggType={aggType}
+                onXKeyChange={setXKey}
+                onYKeyChange={(val) => {
+                    setYKey(val);
+                    if (!statKeys.includes(val) && numericColumns.includes(val)) {
+                        setStatKeys(prev => [...prev, val]);
+                    }
+                }}
+                onAggTypeChange={(val: any) => setAggType(val)}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>

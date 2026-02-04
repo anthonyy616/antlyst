@@ -1,107 +1,149 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import dynamic from 'next/dynamic';
+import { useMemo } from 'react';
+import { Responsive, WidthProvider } from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
 
-const BarChart = dynamic(() => import('recharts').then(mod => mod.BarChart), { ssr: false });
-const Bar = dynamic(() => import('recharts').then(mod => mod.Bar), { ssr: false });
-const XAxis = dynamic(() => import('recharts').then(mod => mod.XAxis), { ssr: false });
-const YAxis = dynamic(() => import('recharts').then(mod => mod.YAxis), { ssr: false });
-const CartesianGrid = dynamic(() => import('recharts').then(mod => mod.CartesianGrid), { ssr: false });
-const Tooltip = dynamic(() => import('recharts').then(mod => mod.Tooltip), { ssr: false });
-const Legend = dynamic(() => import('recharts').then(mod => mod.Legend), { ssr: false });
-const ResponsiveContainer = dynamic(() => import('recharts').then(mod => mod.ResponsiveContainer), { ssr: false });
-const PieChart = dynamic(() => import('recharts').then(mod => mod.PieChart), { ssr: false });
-const Pie = dynamic(() => import('recharts').then(mod => mod.Pie), { ssr: false });
-const Cell = dynamic(() => import('recharts').then(mod => mod.Cell), { ssr: false });
+import { KPICard } from './widgets/KPICard';
+import { PieChartWidget } from './widgets/PieChartWidget';
+import { TrendChart } from './widgets/TrendChart';
+import { DataTable } from './widgets/DataTable';
+import { Card, CardContent } from '@/components/ui/card';
+
+const ResponsiveGridLayout = WidthProvider(Responsive);
 
 interface PowerBIEngineProps {
     analysisResult: any;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
 export default function PowerBIEngine({ analysisResult }: PowerBIEngineProps) {
     if (!analysisResult || !analysisResult.stats || !analysisResult.stats.preview) {
-        return <div>No data available</div>;
+        return <div className="p-8 text-center text-muted-foreground">No data available for Power BI Engine</div>;
     }
 
-    const data = analysisResult.stats.preview;
-    const columns = analysisResult.stats.columns || [];
-    const rowCount = analysisResult.stats.rowCount;
+    const { stats, kpis, charts } = analysisResult;
+    const data = stats.preview;
+    const columns = stats.columns || [];
 
-    // Heuristic: Find first string col for X, first numeric col for Y
-    const xKey = columns.find((c: string) => typeof data[0][c] === 'string') || columns[0];
-    const yKey = columns.find((c: string) => typeof data[0][c] === 'number') || columns[1];
+    // Parse specific x/y keys from layout or heuristics
+    // The analysis engine now populates 'charts' with specific types and gridPos
+
+    // Construct Grid Layout
+    const layouts = useMemo(() => {
+        if (!charts) return { lg: [] };
+
+        const lg = charts.map((chart: any) => ({
+            i: chart.id,
+            x: chart.gridPos?.x || 0,
+            y: chart.gridPos?.y || 0,
+            w: chart.gridPos?.w || 6,
+            h: chart.gridPos?.h || 6,
+            minW: 3,
+            minH: 3
+        }));
+        return { lg };
+    }, [charts]);
+
+    // Helper to render widget based on type
+    const renderWidget = (chart: any) => {
+        const { id, type, title, layout } = chart;
+
+        switch (type) {
+            case 'pie':
+                // Find categorical column if not in layout
+                const catCol = columns.find((c: string) => typeof data[0][c] === 'string') || columns[0];
+                return (
+                    <PieChartWidget
+                        title={title}
+                        data={data}
+                        categoryColumn={catCol}
+                    />
+                );
+            case 'bar':
+            case 'line':
+            case 'area':
+            case 'scatter':
+                // Use layout keys or heuristics
+                let xKey = layout.xaxis?.title?.text || layout.xKey;
+                let yKey = layout.yaxis?.title?.text || layout.yKey;
+
+                // Fallback if keys are missing (heuristic)
+                if (!xKey) xKey = columns.find((c: string) => typeof data[0][c] === 'string') || columns[0];
+                if (!yKey) yKey = columns.find((c: string) => typeof data[0][c] === 'number') || columns[1];
+
+                return (
+                    <TrendChart
+                        title={title}
+                        data={data}
+                        xKey={xKey}
+                        yKey={yKey}
+                        type={type === 'scatter' ? 'line' : type} // Map scatter to line for now or handle in TrendChart
+                    />
+                );
+            case 'heatmap': // Using 'heatmap' as Table placeholder per analysis-engine
+            case 'table':
+                return (
+                    <DataTable
+                        title={title}
+                        data={data}
+                        columns={columns}
+                    />
+                );
+            default:
+                return (
+                    <div className="flex items-center justify-center h-full bg-slate-100 rounded text-muted-foreground">
+                        Unknown Widget Type: {type}
+                    </div>
+                );
+        }
+    };
 
     return (
-        <div className="bg-[#f0f0f0] p-4 min-h-screen font-segoe">
-            <div className="grid grid-cols-4 gap-4 mb-4">
-                <Card className="col-span-1 bg-white border-l-4 border-yellow-500 rounded-none shadow-sm">
-                    <CardContent className="p-4">
-                        <p className="text-sm text-gray-500 uppercase">Total Rows</p>
-                        <p className="text-3xl font-bold text-gray-800">{rowCount}</p>
-                    </CardContent>
-                </Card>
-                <Card className="col-span-1 bg-white border-l-4 border-blue-500 rounded-none shadow-sm">
-                    <CardContent className="p-4">
-                        <p className="text-sm text-gray-500 uppercase">Columns</p>
-                        <p className="text-3xl font-bold text-gray-800">{columns.length}</p>
-                    </CardContent>
-                </Card>
-                <Card className="col-span-2 bg-white border-l-4 border-green-500 rounded-none shadow-sm">
-                    <CardContent className="p-4">
-                        <p className="text-sm text-gray-500 uppercase">Dataset Name</p>
-                        <p className="text-xl font-bold text-gray-800 truncate">Analysis Report</p>
-                    </CardContent>
-                </Card>
+        <div className="bg-[#f3f4f6] dark:bg-slate-950 min-h-screen p-4">
+
+            {/* KPI Section (Static Grid) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {kpis?.map((kpi: any, idx: number) => (
+                    <div key={idx} className="h-24">
+                        <KPICard
+                            title={kpi.label}
+                            value={kpi.value}
+                            change={kpi.change}
+                            trend={kpi.change?.includes('+') ? 'up' : kpi.change?.includes('-') ? 'down' : 'neutral'}
+                        />
+                    </div>
+                ))}
             </div>
 
-            <div className="grid grid-cols-3 gap-4 h-[500px]">
-                <Card className="col-span-2 bg-white rounded-none shadow-sm">
-                    <CardHeader className="pb-2 border-b">
-                        <CardTitle className="text-lg font-semibold text-gray-700">Main Trend Analysis</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[400px] pt-4">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey={xKey} axisLine={false} tickLine={false} />
-                                <YAxis axisLine={false} tickLine={false} />
-                                <Tooltip cursor={{ fill: '#f5f5f5' }} />
-                                <Bar dataKey={yKey} fill="#118DFF" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
+            {/* Draggable Dashboard Area */}
+            <div className="bg-transparent">
+                {charts && charts.length > 0 ? (
+                    <ResponsiveGridLayout
+                        className="layout"
+                        layouts={layouts}
+                        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+                        rowHeight={50}
+                        draggableHandle=".drag-handle"
+                        margin={[16, 16]}
+                    >
+                        {charts.map((chart: any) => (
+                            <div key={chart.id} className="relative group bg-white dark:bg-slate-900 rounded-lg shadow-sm border overflow-hidden">
+                                {/* Drag Handle */}
+                                <div className="drag-handle absolute top-0 left-0 right-0 h-6 cursor-move z-20 hover:bg-slate-100/50 transition-colors" title="Drag to move" />
 
-                <Card className="col-span-1 bg-white rounded-none shadow-sm">
-                    <CardHeader className="pb-2 border-b">
-                        <CardTitle className="text-lg font-semibold text-gray-700">Distribution</CardTitle>
-                    </CardHeader>
-                    <CardContent className="h-[400px] pt-4">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={data.slice(0, 5)}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    paddingAngle={5}
-                                    dataKey={yKey}
-                                >
-                                    {data.slice(0, 5).map((entry: any, index: number) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend verticalAlign="bottom" height={36} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
+                                <div className="h-full pt-4 pb-2 px-2">
+                                    {renderWidget(chart)}
+                                </div>
+                            </div>
+                        ))}
+                    </ResponsiveGridLayout>
+                ) : (
+                    <div className="text-center py-20">
+                        <p className="text-muted-foreground">No charts configured.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

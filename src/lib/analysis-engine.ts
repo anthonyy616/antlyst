@@ -209,20 +209,90 @@ function generateMLDashboard(df: LightDataFrame): DashboardConfig {
 }
 
 function generatePowerBIDashboard(df: LightDataFrame): DashboardConfig {
-    const simple = generateSimpleDashboard(df);
+    const charts: DashboardConfig['charts'] = [];
+    const kpis: DashboardConfig['kpis'] = [];
 
-    // Grid enrichment
-    const enrichedCharts = simple.charts.map((c, i) => ({
-        ...c,
-        gridPos: i === 0
-            ? { x: 0, y: 0, w: 6, h: 4 }
-            : { x: 6, y: 0, w: 6, h: 4 }
-    }));
+    // 1. Generate KPIs (Top 4 stats)
+    kpis.push({ label: "Total Rows", value: df.height.toLocaleString() });
+    kpis.push({ label: "Total Columns", value: df.width.toLocaleString() });
+
+    const numericCols = df.columns.filter(col => df.schema[col] === 'number');
+    const stringCols = df.columns.filter(col => df.schema[col] === 'string');
+
+    if (numericCols.length > 0) {
+        // Sum of first numeric column as extra KPI
+        const col = numericCols[0];
+        const sum = df.data.reduce((acc, row) => acc + (Number(row[col]) || 0), 0);
+        kpis.push({ label: `Total ${col}`, value: sum.toLocaleString() });
+    }
+
+    // 2. Generate Charts with Grid Layout
+    let currentY = 0;
+
+    // Row 1: KPIs are handled separately in the UI typically, but if we want them as widgets in grid:
+    // For now, PowerBI engine will treat KPIS separately or we can map them to widgets.
+    // Let's stick to the interface where KPIs are separate 'header' stats, and grids are for charts.
+
+    // Pie Chart (Top Categorical)
+    if (stringCols.length > 0) {
+        const cat = stringCols[0];
+        charts.push({
+            id: 'pie-1',
+            type: 'pie', // Custom type we interpret
+            title: `Distribution of ${cat}`,
+            data: [], // Data is passed via stats.preview or we construct it here if we want pre-aggregated
+            // Actually, for PowerBI engine, we might want to pass raw data and let widget aggregate, 
+            // OR pass pre-aggregated. The PieChartWidget takes raw data.
+            layout: {},
+            gridPos: { x: 0, y: currentY, w: 4, h: 8 }
+        });
+    }
+
+    // Bar Chart (Numeric vs Categorical)
+    if (numericCols.length > 0 && stringCols.length > 0) {
+        const num = numericCols[0];
+        const cat = stringCols[0];
+        charts.push({
+            id: 'bar-1',
+            type: 'bar', // Mapped to TrendChart or separate
+            title: `${num} by ${cat}`,
+            data: [],
+            layout: { xaxis: { title: { text: cat } }, yaxis: { title: { text: num } } }, // Meta info
+            gridPos: { x: 4, y: currentY, w: 8, h: 8 }
+        });
+        currentY += 8;
+    }
+
+    // Line Chart (Trend if we have second numeric or just index)
+    if (numericCols.length > 0) {
+        charts.push({
+            id: 'line-1',
+            type: 'line',
+            title: `Trend of ${numericCols[0]}`,
+            data: [],
+            layout: { xKey: '_index', yKey: numericCols[0] }, // HACK: Tell widget what keys to use
+            gridPos: { x: 0, y: currentY, w: 12, h: 6 }
+        });
+        currentY += 6;
+    }
+
+    // Data Table
+    charts.push({
+        id: 'table-1',
+        type: 'heatmap', // reusing type enum, or we should add 'table' to enum. 
+        // For now, let's treat 'heatmap' as table or just add a new type if interface allows.
+        // Interface says: 'bar' | 'line' | 'scatter' | 'heatmap' | 'pie' | 'histogram'
+        // Let's use 'heatmap' as a placeholder for Table in this mock or just cast it.
+        title: 'Detailed Data View',
+        data: [],
+        layout: {},
+        gridPos: { x: 0, y: currentY, w: 12, h: 8 }
+    });
 
     return {
         layout: 'powerbi',
-        kpis: simple.kpis,
-        charts: enrichedCharts
+        kpis,
+        charts
     };
 }
 
