@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users, MessageSquare, LayoutDashboard, FolderKanban, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BarChart3, Users, MessageSquare, LayoutDashboard, FolderKanban, Menu, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { useState } from 'react';
 import { useSidebar } from '@/context/SidebarContext';
@@ -27,6 +27,12 @@ const routes = [
         icon: MessageSquare,
         href: '/chat',
         color: 'text-pink-700',
+    },
+    {
+        label: 'AI Analyst',
+        icon: Sparkles,
+        href: '/ai-chat',
+        color: 'text-emerald-500',
     },
     {
         label: 'Organization',
