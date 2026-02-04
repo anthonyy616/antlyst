@@ -18,6 +18,9 @@ export function LandingHeader() {
                 <span className="text-xs font-medium text-muted-foreground ml-10 -mt-1">Anthony + Analyst</span>
             </div>
             <div className="flex items-center gap-4">
+                <Link href="/pricing" className="text-sm font-medium transition-colors hover:text-primary hidden md:block">
+                    Pricing
+                </Link>
                 <ModeToggle />
                 <Link href="/sign-in">
                     <Button variant="outline">Sign In</Button>

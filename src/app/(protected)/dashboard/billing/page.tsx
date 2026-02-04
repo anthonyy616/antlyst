@@ -63,7 +63,7 @@ export default function BillingPage() {
                             <CardTitle>Pro Monthly</CardTitle>
                             <CardDescription>Flexible power.</CardDescription>
                             <div className="text-3xl font-bold mt-4">
-                                {monthly?.product.priceString || '$12.00'}
+                                {monthly?.product?.priceString || '$12.00'}
                                 <span className="text-sm font-normal text-muted-foreground">/mo</span>
                             </div>
                         </CardHeader>
@@ -80,7 +80,7 @@ export default function BillingPage() {
                                 onClick={() => handlePurchase(monthly)}
                                 disabled={!monthly}
                             >
-                                {monthly ? `Subscribe ${monthly.product.priceString}` : 'Unavailable'}
+                                {monthly ? `Subscribe ${monthly?.product?.priceString}` : 'Unavailable'}
                             </Button>
                         </CardFooter>
                     </Card>
@@ -92,7 +92,7 @@ export default function BillingPage() {
                             <CardTitle>Pro Yearly</CardTitle>
                             <CardDescription>Best value for pros.</CardDescription>
                             <div className="text-3xl font-bold mt-4">
-                                {annual?.product.priceString || '$120.00'}
+                                {annual?.product?.priceString || '$120.00'}
                                 <span className="text-sm font-normal text-muted-foreground">/yr</span>
                             </div>
                         </CardHeader>
@@ -109,7 +109,7 @@ export default function BillingPage() {
                                 onClick={() => handlePurchase(annual)}
                                 disabled={!annual}
                             >
-                                {annual ? `Subscribe ${annual.product.priceString}` : 'Unavailable'}
+                                {annual ? `Subscribe ${annual?.product?.priceString}` : 'Unavailable'}
                             </Button>
                         </CardFooter>
                     </Card>

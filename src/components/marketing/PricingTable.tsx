@@ -62,13 +62,13 @@ export function PricingTable() {
             ],
             notIncluded: [],
             cta: "Contact Sales",
-            ctaLink: "mailto:sales@antlyst.xyz", // Placeholder
+            ctaLink: "mailto:rodantechservice@gmail.com", // Placeholder
             popular: false
         }
     ];
 
     return (
-        <section className="py-24 bg-slate-50 dark:bg-slate-900" id="pricing">
+        <section className="py-24 bg-slate-50 dark:bg-slate-900 relative z-10" id="pricing">
             <div className="container mx-auto px-4">
                 <div className="text-center max-w-3xl mx-auto mb-16">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4 text-slate-900 dark:text-white">
@@ -132,7 +132,7 @@ export function PricingTable() {
 
                 <div className="mt-16 text-center">
                     <p className="text-slate-600 dark:text-slate-400">
-                        Need Enterprise features? <Link href="mailto:enterprise@antlyst.xyz" className="text-brand-purple font-semibold hover:underline">Contact us</Link> for custom scaling and SLAs.
+                        Need Enterprise features? <Link href="mailto:rodantechservice@gmail.com" className="text-brand-purple font-semibold hover:underline">Contact us</Link> for custom scaling and SLAs.
                     </p>
                 </div>
             </div>

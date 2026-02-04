@@ -36,7 +36,7 @@ export function FeatureMatrix() {
     ];
 
     return (
-        <section className="py-16 bg-white dark:bg-slate-950">
+        <section className="py-16 bg-white dark:bg-slate-950 relative z-10">
             <div className="container mx-auto px-4 max-w-7xl">
                 <h2 className="text-3xl font-bold text-center mb-12">Compare Plans</h2>
 
