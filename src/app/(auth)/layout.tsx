@@ -1,4 +1,4 @@
-import { ClerkProvider } from '@clerk/nextjs'
+
 
 export default function AuthLayout({
     children,
@@ -6,10 +6,8 @@ export default function AuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <ClerkProvider>
-            <div className="flex min-h-screen items-center justify-center">
-                {children}
-            </div>
-        </ClerkProvider>
+        <div className="flex min-h-screen items-center justify-center">
+            {children}
+        </div>
     );
 }

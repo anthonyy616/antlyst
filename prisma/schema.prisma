@@ -17,7 +17,7 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull) // Deprecated in favor of memberships
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull) // Deprecated
   memberships  OrgMembership[]
   
   projects     Project[]     @relation("ProjectOwner")
@@ -27,9 +27,52 @@ model User {
   jobs         Job[]
   joinRequests JoinRequest[]
   notifications Notification[]
+  
+  // Phase C: Subscription & Payments
+  subscription Subscription? 
+  // Phase B: AI Chat Logs for Limits
+  aiChats      AIChatLog[]
 
   @@index([organizationId])
   @@map("users")
+}
+
+// Phase C: Subscription Model
+model Subscription {
+  id              String   @id // Custom Ticket ID / RC Transaction ID / Payment ID
+  userId          String   @unique // One active subscription per user (or simple relation)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  planId          String   // "free", "pro_monthly", "pro_yearly", "business"
+  status          String   // "active", "canceled", "expired", "past_due"
+  provider        String   // "stripe", "revenuecat", "coinbase"
+  
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  
+  cancelAtPeriodEnd  Boolean  @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@map("subscriptions")
+}
+
+// Phase B: AI Chat Tracking
+model AIChatLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  model     String   // "llama-3.1-8b", "gpt-4"
+  tokensIn  Int      @default(0)
+  tokensOut Int      @default(0)
+  
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt]) // For counting monthly usage
+  @@map("ai_chat_logs")
 }
 
 model Organization {

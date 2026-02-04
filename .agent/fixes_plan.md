@@ -24,7 +24,3 @@
 ## 5. Navigation
 
 - [ ] **Organization Visibility**: Add a clear "Organizations" link or ensure the Organization Switcher is prominent/functioning to allow easy switching.
-
-## 6. Build Issue
-
-- [ ] **Fix EPERM**: Resolve file locking issue during build (caused by running dev server).

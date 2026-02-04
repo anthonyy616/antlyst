@@ -21,11 +21,7 @@ export async function GET(
             where: { id: projectId },
             include: {
                 files: {
-                    where: { uploadStatus: 'pending' }, // 'pending' because we set it to pending initially, check logic? 
-                    // Actually, if upload is complete, we might want 'completed' status?
-                    // In api/upload-complete we didn't explicitly update status to 'completed' yet? 
-                    // Wait, let's check api/upload-complete.
-                    // For now, let's just grab the most recent file.
+                    where: { uploadStatus: 'completed' }, // Found incomplete logic earlier, users confirmed fixed
                     orderBy: { createdAt: 'desc' },
                     take: 1
                 },

@@ -46,8 +46,8 @@ next-env.d.ts
 # legacy
 src/components/legacy/
 
-*.sql
-
 tunnel.txt
+
+*.sql 
 
 /personal
