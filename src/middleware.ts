@@ -32,6 +32,14 @@ export default clerkMiddleware(async (auth, req) => {
 
     // 2. Auth Protection Logic
     if (isProtectedRoute(req)) await auth.protect();
+
+    // 3. Basic Security Headers
+    const response = NextResponse.next();
+    response.headers.set("X-XSS-Protection", "1; mode=block");
+    response.headers.set("X-Frame-Options", "DENY");
+    response.headers.set("X-Content-Type-Options", "nosniff");
+
+    return response;
 });
 
 export const config = {

@@ -32,9 +32,51 @@ model User {
   subscription Subscription? 
   // Phase B: AI Chat Logs for Limits
   aiChats      AIChatLog[]
+  aiUsage      UserAIUsage?
 
   @@index([organizationId])
   @@map("users")
+}
+
+model UserAIUsage {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id])
+
+  // Daily tracking
+  tokensUsedToday    Int      @default(0)
+  requestsToday      Int      @default(0)
+  lastResetDate      DateTime @default(now())
+
+  // Monthly tracking (for billing)
+  tokensUsedMonth    Int      @default(0)
+  requestsMonth      Int      @default(0)
+  monthStartDate     DateTime @default(now())
+
+  // Rate limiting snapshot
+  lastRequestAt      DateTime?
+  requestsLastMinute Int      @default(0)
+
+  updatedAt          DateTime @updatedAt
+}
+
+model GlobalTokenPool {
+  id                 String   @id @default(cuid())
+  date               DateTime @unique @default(now()) @db.Date
+
+  // Pool tracking
+  totalTokensUsed    Int      @default(0)
+  freePoolUsed       Int      @default(0)
+  proPoolUsed        Int      @default(0)
+  enterprisePoolUsed Int      @default(0)
+
+  // User counts for dynamic calculation
+  activeFreeUsers    Int      @default(0)
+  activeProUsers     Int      @default(0)
+
+  // Minute-level for RPM limiting (snapshot)
+  requestsThisMinute Int      @default(0)
+  minuteStartedAt    DateTime @default(now())
 }
 
 // Phase C: Subscription Model
