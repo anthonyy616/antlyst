@@ -3,15 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { getSignedUploadUrl } from '@/lib/r2';
 import { generateR2Key } from '@/lib/utils';
-import { z } from 'zod';
-
-const uploadSchema = z.object({
-  fileName: z.string().min(1),
-  fileSize: z.number().positive(),
-  mimeType: z.string(),
-  orgId: z.string(),
-  style: z.enum(['simple', 'ml', 'powerbi']).optional(),
-});
+import { fileUploadSchema } from '@/lib/validations/file';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validation = uploadSchema.safeParse(body);
+    const validation = fileUploadSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(

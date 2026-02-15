@@ -27,6 +27,9 @@ export default async function DashboardPage({
       id: projectId,
       organizationId: orgId,
     },
+    include: {
+      files: true,
+    },
   });
 
   if (!project) {
@@ -34,12 +37,15 @@ export default async function DashboardPage({
   }
 
   // Fetch analysis result
-  const analysis = await prisma.analysis.findFirst({
-    where: { projectId: projectId },
-    orderBy: { createdAt: 'desc' },
+  const analysis = await prisma.analysisResult.findFirst({
+    where: { fileId: project.files[0]?.id },
+    select: {
+      id: true,
+      stats: true, // This contains the dashboard results
+    }
   });
 
-  const analysisResult = analysis?.results || null;
+  const analysisResult = analysis?.stats as any || null;
 
   const renderEngine = () => {
     switch (style) {

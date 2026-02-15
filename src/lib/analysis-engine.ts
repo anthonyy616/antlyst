@@ -41,19 +41,24 @@ interface LightDataFrame {
 }
 
 export async function generateDashboard(
-    csvContent: string,
+    data: any, // Can be csv content string OR pre-parsed Row array
     style: 'simple' | 'ml' | 'powerbi'
 ): Promise<DashboardConfig> {
+    let rows: Row[] = [];
+    let columns: string[] = [];
 
-    // Parse CSV with PapaParse
-    const parseResult = Papa.parse(csvContent, {
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true
-    });
-
-    const rows = parseResult.data as Row[];
-    const columns = parseResult.meta.fields || [];
+    if (typeof data === 'string') {
+        const parseResult = Papa.parse(data, {
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true
+        });
+        rows = parseResult.data as Row[];
+        columns = parseResult.meta.fields || [];
+    } else if (Array.isArray(data)) {
+        rows = data;
+        columns = rows.length > 0 ? Object.keys(rows[0]) : [];
+    }
 
     // Infer Schema from first row
     const schema: LightDataFrame['schema'] = {};

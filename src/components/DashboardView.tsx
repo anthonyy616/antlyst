@@ -8,12 +8,15 @@ import { motion } from 'framer-motion';
 // Dynamically import Plot for performance
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false, loading: () => <p>Loading chart...</p> });
 import { Sparkles, AlertTriangle, TrendingUp, Info } from 'lucide-react';
+import DashboardSkeleton from './skeletons/DashboardSkeleton';
 
 interface DashboardViewProps {
     config: DashboardConfig;
+    loading?: boolean;
 }
 
-export function DashboardView({ config }: DashboardViewProps) {
+export function DashboardView({ config, loading }: DashboardViewProps) {
+    if (loading) return <DashboardSkeleton />;
     if (!config) return null;
 
     // Helper for grid styles
