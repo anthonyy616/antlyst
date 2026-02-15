@@ -9,7 +9,7 @@ export interface DashboardConfig {
     }[];
     charts: {
         id: string;
-        type: 'bar' | 'line' | 'scatter' | 'heatmap' | 'pie' | 'histogram';
+        type: 'bar' | 'line' | 'scatter' | 'heatmap' | 'pie' | 'histogram' | 'table' | 'area';
         title: string;
         data: any[]; // Plotly data array
         layout: any; // Plotly layout object
@@ -60,6 +60,8 @@ export async function generateDashboard(
     if (rows.length > 0) {
         columns.forEach(col => {
             const val = rows[0][col];
+            // strictly filter numeric: check if it's actually a number and not an ID-like string that got parsed as number
+            // or just use dynamicTyping result.
             if (typeof val === 'number') schema[col] = 'number';
             else if (typeof val === 'string') schema[col] = 'string';
             else schema[col] = 'unknown';
@@ -216,61 +218,74 @@ function generatePowerBIDashboard(df: LightDataFrame): DashboardConfig {
     kpis.push({ label: "Total Rows", value: df.height.toLocaleString() });
     kpis.push({ label: "Total Columns", value: df.width.toLocaleString() });
 
+    // Filter columns
     const numericCols = df.columns.filter(col => df.schema[col] === 'number');
     const stringCols = df.columns.filter(col => df.schema[col] === 'string');
 
-    if (numericCols.length > 0) {
+    // Smart Plotting Logic: Exclude ID-like columns (all unique)
+    const validNumericCols = numericCols.filter(col => {
+        const uniqueValues = new Set(df.data.map(r => r[col])).size;
+        return uniqueValues < df.height * 0.95; // Assume if 95% unique, it's an ID
+    });
+    // If no valid numeric cols, fallback to all numeric
+    const targetNumericCols = validNumericCols.length > 0 ? validNumericCols : numericCols;
+
+
+    if (targetNumericCols.length > 0) {
         // Sum of first numeric column as extra KPI
-        const col = numericCols[0];
+        const col = targetNumericCols[0];
         const sum = df.data.reduce((acc, row) => acc + (Number(row[col]) || 0), 0);
-        kpis.push({ label: `Total ${col}`, value: sum.toLocaleString() });
+        kpis.push({ label: `Total ${col}`, value: sum.toLocaleString(undefined, { maximumFractionDigits: 0 }) });
     }
 
-    // 2. Generate Charts with Grid Layout
+    // 2. Generate Grid Layout
     let currentY = 0;
-
-    // Row 1: KPIs are handled separately in the UI typically, but if we want them as widgets in grid:
-    // For now, PowerBI engine will treat KPIS separately or we can map them to widgets.
-    // Let's stick to the interface where KPIs are separate 'header' stats, and grids are for charts.
 
     // Pie Chart (Top Categorical)
     if (stringCols.length > 0) {
         const cat = stringCols[0];
         charts.push({
             id: 'pie-1',
-            type: 'pie', // Custom type we interpret
+            type: 'pie',
             title: `Distribution of ${cat}`,
-            data: [], // Data is passed via stats.preview or we construct it here if we want pre-aggregated
-            // Actually, for PowerBI engine, we might want to pass raw data and let widget aggregate, 
-            // OR pass pre-aggregated. The PieChartWidget takes raw data.
+            data: [],
             layout: {},
             gridPos: { x: 0, y: currentY, w: 4, h: 8 }
         });
     }
 
     // Bar Chart (Numeric vs Categorical)
-    if (numericCols.length > 0 && stringCols.length > 0) {
-        const num = numericCols[0];
+    if (targetNumericCols.length > 0 && stringCols.length > 0) {
+        const num = targetNumericCols[0];
         const cat = stringCols[0];
         charts.push({
             id: 'bar-1',
-            type: 'bar', // Mapped to TrendChart or separate
+            type: 'bar',
             title: `${num} by ${cat}`,
             data: [],
-            layout: { xaxis: { title: { text: cat } }, yaxis: { title: { text: num } } }, // Meta info
+            layout: { xKey: cat, yKey: num, marker: { color: '#8b5cf6' } },
             gridPos: { x: 4, y: currentY, w: 8, h: 8 }
         });
         currentY += 8;
+    } else {
+        // If we didn't add the bar chart, we should update currentY if pie was added? 
+        // Logic check: if pie added (h=8), and no bar, next chart starts at y=0 which overlaps?
+        // Actually grid layout is smart enough to find space but explicit y is better.
+        if (stringCols.length > 0) currentY += 8;
     }
 
-    // Line Chart (Trend if we have second numeric or just index)
-    if (numericCols.length > 0) {
+    // Line/Area Chart (Trend)
+    if (targetNumericCols.length > 0) {
+        // Try to find a 'date' or 'year' column for X, else use index
+        const dateCol = stringCols.find(c => c.toLowerCase().includes('date') || c.toLowerCase().includes('year'));
+        const num = targetNumericCols.length > 1 ? targetNumericCols[1] : targetNumericCols[0];
+
         charts.push({
-            id: 'line-1',
-            type: 'line',
-            title: `Trend of ${numericCols[0]}`,
+            id: 'area-1',
+            type: 'area',
+            title: `Trend of ${num}`,
             data: [],
-            layout: { xKey: '_index', yKey: numericCols[0] }, // HACK: Tell widget what keys to use
+            layout: { xKey: dateCol || '_index', yKey: num, marker: { color: '#06b6d4' } },
             gridPos: { x: 0, y: currentY, w: 12, h: 6 }
         });
         currentY += 6;
@@ -279,10 +294,7 @@ function generatePowerBIDashboard(df: LightDataFrame): DashboardConfig {
     // Data Table
     charts.push({
         id: 'table-1',
-        type: 'heatmap', // reusing type enum, or we should add 'table' to enum. 
-        // For now, let's treat 'heatmap' as table or just add a new type if interface allows.
-        // Interface says: 'bar' | 'line' | 'scatter' | 'heatmap' | 'pie' | 'histogram'
-        // Let's use 'heatmap' as a placeholder for Table in this mock or just cast it.
+        type: 'table',
         title: 'Detailed Data View',
         data: [],
         layout: {},

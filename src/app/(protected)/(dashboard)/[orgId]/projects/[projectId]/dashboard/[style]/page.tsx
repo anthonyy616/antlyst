@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import SimpleEngine from '@/components/dashboard/SimpleEngine';
+import SimpleEngine from '@/components/dashboard/simple-engine'; // Use implementation
 import MLPlotsEngine from '@/components/dashboard/MLPlotsEngine';
 import PowerBIEngine from '@/components/dashboard/PowerBIEngine';
 
@@ -33,14 +33,22 @@ export default async function DashboardPage({
     notFound();
   }
 
+  // Fetch analysis result
+  const analysis = await prisma.analysis.findFirst({
+    where: { projectId: projectId },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const analysisResult = analysis?.results || null;
+
   const renderEngine = () => {
     switch (style) {
       case 'simple':
-        return <SimpleEngine projectId={projectId} />;
+        return <SimpleEngine analysisResult={analysisResult} />;
       case 'ml':
-        return <MLPlotsEngine projectId={projectId} />;
+        return <MLPlotsEngine analysisResult={analysisResult} />;
       case 'powerbi':
-        return <PowerBIEngine projectId={projectId} />;
+        return <PowerBIEngine analysisResult={analysisResult} />;
       default:
         return <div>Unknown style</div>;
     }

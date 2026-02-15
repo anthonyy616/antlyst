@@ -1,69 +1,71 @@
-import dynamic from 'next/dynamic';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useMemo } from 'react';
+'use client';
 
+import dynamic from 'next/dynamic';
+import { useMemo } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+
+// Dynamic import for Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 interface PieChartWidgetProps {
     title: string;
-    data: any[]; // Array of rows
+    data: any[];
     categoryColumn: string;
-    valueColumn?: string; // If aggregation needed
+    height?: number;
 }
 
-export function PieChartWidget({ title, data, categoryColumn, valueColumn }: PieChartWidgetProps) {
+export function PieChartWidget({ title, data, categoryColumn, height = 300 }: PieChartWidgetProps) {
     const chartData = useMemo(() => {
-        const counts: Record<string, number> = {};
+        if (!data || data.length === 0) return [];
 
+        const counts: Record<string, number> = {};
         data.forEach(row => {
-            const key = String(row[categoryColumn]);
-            if (valueColumn) {
-                counts[key] = (counts[key] || 0) + (Number(row[valueColumn]) || 0);
-            } else {
-                counts[key] = (counts[key] || 0) + 1;
-            }
+            const val = String(row[categoryColumn] || 'Unknown');
+            counts[val] = (counts[val] || 0) + 1;
         });
 
-        const labels = Object.keys(counts);
-        const values = Object.values(counts);
+        // Sort by count desc
+        const sorted = Object.entries(counts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 10); // Top 10
 
         return [{
-            labels,
-            values,
+            labels: sorted.map(([k]) => k),
+            values: sorted.map(([, v]) => v),
             type: 'pie',
-            hole: 0.4,
+            hole: 0.4, // Donut chart style
             textinfo: 'label+percent',
-            textposition: 'inside',
+            hoverinfo: 'label+value+percent',
             marker: {
                 colors: [
-                    '#5e30eb', '#52d6fc', '#d946ef', '#f97316', '#22c55e',
-                    '#eab308', '#ef4444', '#3b82f6', '#6366f1', '#8b5cf6'
+                    '#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e',
+                    '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4'
                 ]
             }
         }];
-    }, [data, categoryColumn, valueColumn]);
+    }, [data, categoryColumn]);
 
     return (
-        <Card className="h-full flex flex-col">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 min-h-0">
+        <div className="w-full h-full flex flex-col">
+            <div className="px-4 py-2 border-b">
+                <h3 className="text-sm font-semibold">{title}</h3>
+            </div>
+            <div className="flex-1 w-full min-h-0">
                 <Plot
                     data={chartData as any}
                     layout={{
                         autosize: true,
-                        margin: { l: 20, r: 20, t: 10, b: 20 },
-                        showlegend: false,
-                        paper_bgcolor: 'rgba(0,0,0,0)',
-                        plot_bgcolor: 'rgba(0,0,0,0)',
-                        font: { color: '#71717a' }
+                        margin: { t: 20, r: 20, b: 20, l: 20 },
+                        showlegend: true,
+                        legend: { orientation: 'h', y: -0.1 },
+                        paper_bgcolor: 'transparent',
+                        plot_bgcolor: 'transparent',
                     }}
-                    style={{ width: '100%', height: '100%' }}
                     useResizeHandler={true}
+                    style={{ width: '100%', height: '100%' }}
                     config={{ displayModeBar: false }}
                 />
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

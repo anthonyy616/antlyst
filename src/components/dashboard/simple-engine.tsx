@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Plus, X, BarChart3 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { ChartEditor } from './ChartEditor';
+import { Label } from "@/components/ui/label";
 
 // Dynamically import Plotly
 const Plot = dynamic(() => import('react-plotly.js'), {
@@ -193,21 +193,51 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
         <div className="space-y-6">
 
             {/* Control Panel */}
-            <ChartEditor
-                columns={columns}
-                numericColumns={numericColumns}
-                xKey={xKey}
-                yKey={yKey}
-                aggType={aggType}
-                onXKeyChange={setXKey}
-                onYKeyChange={(val) => {
-                    setYKey(val);
-                    if (!statKeys.includes(val) && numericColumns.includes(val)) {
-                        setStatKeys(prev => [...prev, val]);
-                    }
-                }}
-                onAggTypeChange={(val: any) => setAggType(val)}
-            />
+            {/* Control Panel */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
+                <div className="space-y-2">
+                    <Label>X Axis (Category)</Label>
+                    <Select value={xKey} onValueChange={setXKey}>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {columns.map((col: string) => <SelectItem key={col} value={col}>{col}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Y Axis (Value)</Label>
+                    <Select value={yKey} onValueChange={(val) => {
+                        setYKey(val);
+                        if (!statKeys.includes(val) && numericColumns.includes(val)) {
+                            setStatKeys(prev => [...prev, val]);
+                        }
+                    }}>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {columns.map((col: string) => <SelectItem key={col} value={col}>{col}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Aggregation</Label>
+                    <Select value={aggType} onValueChange={(val: any) => setAggType(val)}>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="sum">Sum</SelectItem>
+                            <SelectItem value="avg">Average</SelectItem>
+                            <SelectItem value="min">Minimum</SelectItem>
+                            <SelectItem value="max">Maximum</SelectItem>
+                            <SelectItem value="count">Count</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>

@@ -1,7 +1,9 @@
+'use client';
+
 import dynamic from 'next/dynamic';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useMemo } from 'react';
 
+// Dynamic import for Plotly
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 interface TrendChartProps {
@@ -9,52 +11,55 @@ interface TrendChartProps {
     data: any[];
     xKey: string;
     yKey: string;
-    type?: 'line' | 'bar' | 'area';
+    type?: 'line' | 'bar' | 'area' | 'scatter';
     color?: string;
 }
 
-export function TrendChart({ title, data, xKey, yKey, type = 'line', color = '#52d6fc' }: TrendChartProps) {
+export function TrendChart({ title, data, xKey, yKey, type = 'line', color = '#6366f1' }: TrendChartProps) {
     const chartData = useMemo(() => {
-        const x = data.map(d => d[xKey]);
-        const y = data.map(d => d[yKey]);
+        if (!data || data.length === 0) return [];
 
-        return [{
+        const x = data.map((row, i) => xKey === '_index' ? i : row[xKey]);
+        const y = data.map(row => row[yKey]);
+
+        const trace: any = {
             x,
             y,
             type: type === 'area' ? 'scatter' : type,
-            fill: type === 'area' ? 'tozeroy' : undefined,
-            mode: type === 'bar' ? undefined : 'lines+markers',
+            mode: type === 'scatter' ? 'markers' : 'lines',
             marker: { color },
-            line: {
-                color,
-                width: 3,
-                shape: 'spline'
-            }
-        }];
+            line: { color, width: 2 }
+        };
+
+        if (type === 'area') {
+            trace.fill = 'tozeroy';
+        }
+
+        return [trace];
     }, [data, xKey, yKey, type, color]);
 
     return (
-        <Card className="h-full flex flex-col">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 min-h-0">
+        <div className="w-full h-full flex flex-col">
+            <div className="px-4 py-2 border-b">
+                <h3 className="text-sm font-semibold">{title}</h3>
+            </div>
+            <div className="flex-1 w-full min-h-0">
                 <Plot
                     data={chartData as any}
                     layout={{
                         autosize: true,
-                        margin: { l: 40, r: 20, t: 10, b: 40 },
-                        paper_bgcolor: 'rgba(0,0,0,0)',
-                        plot_bgcolor: 'rgba(0,0,0,0)',
-                        font: { color: '#71717a' },
-                        xaxis: { title: { text: xKey }, showgrid: false },
-                        yaxis: { title: { text: yKey }, gridcolor: '#71717a1a' }
+                        margin: { t: 20, r: 20, b: 40, l: 50 },
+                        xaxis: { title: xKey !== '_index' ? { text: xKey } : undefined, automargin: true },
+                        yaxis: { title: { text: yKey }, automargin: true },
+                        paper_bgcolor: 'transparent',
+                        plot_bgcolor: 'transparent',
+                        showlegend: false,
                     }}
-                    style={{ width: '100%', height: '100%' }}
                     useResizeHandler={true}
-                    config={{ displayModeBar: false, responsive: true }}
+                    style={{ width: '100%', height: '100%' }}
+                    config={{ displayModeBar: true, displaylogo: false }}
                 />
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

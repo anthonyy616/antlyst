@@ -1,18 +1,23 @@
 export const CHART_THEMES = {
     default: {
-        colors: ['#5e30eb', '#52d6fc', '#d946ef', '#f97316', '#22c55e', '#eab308', '#ef4444', '#3b82f6', '#6366f1', '#8b5cf6'],
-        background: 'transparent',
-        textColor: '#71717a',
+        name: 'Default',
+        colors: ['#6366f1', '#8b5cf6', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#84cc16', '#10b981', '#06b6d4']
     },
-    neon: {
-        colors: ['#f0f', '#0ff', '#0f0', '#ff0', '#f00', '#00f'],
-        background: '#000',
-        textColor: '#fff',
+    ocean: {
+        name: 'Ocean',
+        colors: ['#0c4a6e', '#0369a1', '#0284c7', '#0ea5e9', '#38bdf8', '#7dd3fc', '#bae6fd', '#e0f2fe']
     },
-    pastel: {
-        colors: ['#fca5a5', '#fdba74', '#bef264', '#86efac', '#67e8f9', '#93c5fd', '#c4b5fd', '#f9a8d4'],
-        background: '#fff',
-        textColor: '#333',
+    forest: {
+        name: 'Forest',
+        colors: ['#064e3b', '#065f46', '#047857', '#059669', '#10b981', '#34d399', '#6ee7b7', '#a7f3d0']
+    },
+    sunset: {
+        name: 'Sunset',
+        colors: ['#881337', '#9f1239', '#be123c', '#e11d48', '#f43f5e', '#fb7185', '#fda4af', '#fecdd3']
+    },
+    monochrome: {
+        name: 'Monochrome',
+        colors: ['#171717', '#262626', '#404040', '#525252', '#737373', '#a3a3a3', '#d4d4d4', '#e5e5e5']
     }
 };
 

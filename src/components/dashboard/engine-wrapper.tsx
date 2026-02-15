@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import SimpleEngine from './simple-engine';
 import MLPlotsEngine from './MLPlotsEngine';
-import PowerBIEngine from './powerbi-engine';
+import PowerBIEngine from './PowerBIEngine';
+import { ExportButton } from './ExportButton';
 import { BarChart3, BrainCircuit, LayoutGrid } from 'lucide-react';
 
 interface EngineWrapperProps {
@@ -22,6 +23,7 @@ export default function EngineWrapper({ analysisResult }: EngineWrapperProps) {
             <div className="bg-white border-b p-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
                 <h1 className="text-xl font-bold text-black">Dashboard</h1>
                 <div className="flex space-x-2">
+                    <ExportButton targetId="dashboard-content" />
                     <Button
                         variant={currentEngine === 'simple' ? 'default' : 'outline'}
                         onClick={() => setCurrentEngine('simple')}
@@ -50,7 +52,7 @@ export default function EngineWrapper({ analysisResult }: EngineWrapperProps) {
             </div>
 
             {/* Engine Content */}
-            <div className="flex-1 p-6 bg-gray-50">
+            <div id="dashboard-content" className="flex-1 p-6 bg-gray-50 dark:bg-slate-950">
                 {currentEngine === 'simple' && <SimpleEngine analysisResult={analysisResult} />}
                 {currentEngine === 'ml' && <MLPlotsEngine analysisResult={analysisResult} />}
                 {currentEngine === 'powerbi' && <PowerBIEngine analysisResult={analysisResult} />}

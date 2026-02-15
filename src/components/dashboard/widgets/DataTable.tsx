@@ -1,3 +1,5 @@
+'use client';
+
 import {
     Table,
     TableBody,
@@ -6,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DataTableProps {
     title: string;
@@ -16,32 +18,36 @@ interface DataTableProps {
 
 export function DataTable({ title, data, columns }: DataTableProps) {
     return (
-        <Card className="h-full flex flex-col overflow-hidden">
-            <CardHeader className="pb-2 flex-shrink-0">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-auto p-0">
-                <Table>
-                    <TableHeader className="sticky top-0 bg-background z-10">
-                        <TableRow>
-                            {columns.map((col) => (
-                                <TableHead key={col} className="whitespace-nowrap">{col}</TableHead>
-                            ))}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {data.slice(0, 50).map((row, i) => (
-                            <TableRow key={i}>
+        <div className="w-full h-full flex flex-col bg-white dark:bg-slate-900">
+            <div className="px-4 py-2 border-b">
+                <h3 className="text-sm font-semibold">{title}</h3>
+            </div>
+            <div className="flex-1 min-h-0 relative">
+                <ScrollArea className="h-full w-full rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
                                 {columns.map((col) => (
-                                    <TableCell key={`${i}-${col}`} className="whitespace-nowrap">
-                                        {row[col]}
-                                    </TableCell>
+                                    <TableHead key={col} className="w-[150px] whitespace-nowrap">
+                                        {col}
+                                    </TableHead>
                                 ))}
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
+                        </TableHeader>
+                        <TableBody>
+                            {data.slice(0, 100).map((row, i) => ( // Limit to 100 for perf in widget
+                                <TableRow key={i}>
+                                    {columns.map((col) => (
+                                        <TableCell key={`${i}-${col}`} className="font-medium whitespace-nowrap">
+                                            {typeof row[col] === 'object' ? JSON.stringify(row[col]) : row[col]}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
+            </div>
+        </div>
     );
 }

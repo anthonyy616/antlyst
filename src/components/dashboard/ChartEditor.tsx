@@ -1,99 +1,143 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+'use client';
+
+import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { CHART_THEMES, ChartTheme } from '@/lib/chart-themes';
 
 interface ChartEditorProps {
+    open: boolean;
+    onClose: () => void;
+    chartConfig: any;
+    onSave: (newConfig: any) => void;
     columns: string[];
-    numericColumns: string[];
-    xKey: string;
-    yKey: string;
-    chartType?: string;
-    aggType: string;
-    onXKeyChange: (val: string) => void;
-    onYKeyChange: (val: string) => void;
-    onChartTypeChange?: (val: string) => void;
-    onAggTypeChange: (val: any) => void;
 }
 
-export function ChartEditor({
-    columns,
-    numericColumns,
-    xKey,
-    yKey,
-    chartType,
-    aggType,
-    onXKeyChange,
-    onYKeyChange,
-    onChartTypeChange,
-    onAggTypeChange
-}: ChartEditorProps) {
+export function ChartEditor({ open, onClose, chartConfig, onSave, columns }: ChartEditorProps) {
+    const [type, setType] = useState<string>(chartConfig?.type || 'bar');
+    const [xKey, setXKey] = useState<string>(chartConfig?.layout?.xKey || '');
+    const [yKey, setYKey] = useState<string>(chartConfig?.layout?.yKey || '');
+    const [theme, setTheme] = useState<ChartTheme>('default');
+
+    const handleSave = () => {
+        const newConfig = {
+            ...chartConfig,
+            type,
+            layout: {
+                ...chartConfig.layout,
+                xKey,
+                yKey,
+                marker: {
+                    ...chartConfig.layout?.marker,
+                    color: CHART_THEMES[theme].colors[0] // Set primary color from theme
+                }
+            }
+        };
+        onSave(newConfig);
+        onClose();
+    };
+
     return (
-        <Card>
-            <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Chart Editor</CardTitle>
-            </CardHeader>
-            <CardContent className="flex gap-4 flex-wrap">
-                <div className="w-[180px]">
-                    <label className="text-xs font-semibold mb-1.5 block text-slate-500">X Axis (Dimension)</label>
-                    <Select value={xKey} onValueChange={onXKeyChange}>
-                        <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select X Axis" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {columns.map((c: string) => (
-                                <SelectItem key={`x-${c}`} value={c}>{c}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="w-[180px]">
-                    <label className="text-xs font-semibold mb-1.5 block text-slate-500">Y Axis (Value)</label>
-                    <Select value={yKey} onValueChange={onYKeyChange}>
-                        <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select Y Axis" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {numericColumns.map((c: string) => (
-                                <SelectItem key={`y-${c}`} value={c}>{c}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="w-[150px]">
-                    <label className="text-xs font-semibold mb-1.5 block text-slate-500">Aggregation</label>
-                    <Select value={aggType} onValueChange={onAggTypeChange}>
-                        <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Aggregation" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="sum">Sum</SelectItem>
-                            <SelectItem value="avg">Average</SelectItem>
-                            <SelectItem value="min">Minimum</SelectItem>
-                            <SelectItem value="max">Maximum</SelectItem>
-                            <SelectItem value="count">Count</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {onChartTypeChange && (
-                    <div className="w-[150px]">
-                        <label className="text-xs font-semibold mb-1.5 block text-slate-500">Chart Type</label>
-                        <Select value={chartType} onValueChange={onChartTypeChange}>
-                            <SelectTrigger className="h-9">
-                                <SelectValue placeholder="Type" />
+        <Dialog open={open} onOpenChange={onClose}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Edit Chart</DialogTitle>
+                    <DialogDescription>
+                        Customize your chart settings here.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="type" className="text-right">
+                            Type
+                        </Label>
+                        <Select value={type} onValueChange={setType}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select chart type" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="bar">Bar Chart</SelectItem>
-                                <SelectItem value="line">Line Chart</SelectItem>
-                                <SelectItem value="area">Area Chart</SelectItem>
-                                <SelectItem value="histogram">Histogram</SelectItem>
-                                <SelectItem value="pie">Pie Chart</SelectItem>
+                                <SelectItem value="bar">Bar</SelectItem>
+                                <SelectItem value="line">Line</SelectItem>
+                                <SelectItem value="area">Area</SelectItem>
+                                <SelectItem value="scatter">Scatter</SelectItem>
+                                <SelectItem value="pie">Pie</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
-                )}
-            </CardContent>
-        </Card>
+
+                    {type !== 'pie' && (
+                        <>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="xKey" className="text-right">
+                                    X Axis
+                                </Label>
+                                <Select value={xKey} onValueChange={setXKey}>
+                                    <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Select column" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="_index">Index</SelectItem>
+                                        {columns.map((col) => (
+                                            <SelectItem key={col} value={col}>{col}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="yKey" className="text-right">
+                                    Y Axis
+                                </Label>
+                                <Select value={yKey} onValueChange={setYKey}>
+                                    <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Select column" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {columns.map((col) => (
+                                            <SelectItem key={col} value={col}>{col}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </>
+                    )}
+
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="theme" className="text-right">
+                            Theme
+                        </Label>
+                        <Select value={theme} onValueChange={(val: ChartTheme) => setTheme(val)}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select theme" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {Object.keys(CHART_THEMES).map((key) => (
+                                    <SelectItem key={key} value={key}>
+                                        {CHART_THEMES[key as ChartTheme].name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button onClick={handleSave}>Save changes</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
