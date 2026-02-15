@@ -7,7 +7,44 @@ import Papa from "papaparse";
 import { Readable } from "stream";
 
 // Helper to convert stream to buffer
+// Helper to convert stream to buffer
 import * as XLSX from "xlsx";
+
+// Polyfill for pdf-parse/pdfjs-dist in server environment
+if (typeof Promise.withResolvers === 'undefined') {
+    // @ts-ignore
+    Promise.withResolvers = function () {
+        let resolve, reject;
+        const promise = new Promise((res, rej) => {
+            resolve = res;
+            reject = rej;
+        });
+        return { promise, resolve, reject };
+    };
+}
+// @ts-ignore
+if (!global.DOMMatrix) {
+    // @ts-ignore
+    global.DOMMatrix = class DOMMatrix {
+        constructor() { return this; }
+        toString() { return "matrix(1, 0, 0, 1, 0, 0)"; }
+    };
+}
+// @ts-ignore
+if (!global.ImageData) {
+    // @ts-ignore
+    global.ImageData = class ImageData {
+        constructor() { return this; }
+    };
+}
+// @ts-ignore
+if (!global.Path2D) {
+    // @ts-ignore
+    global.Path2D = class Path2D {
+        constructor() { return this; }
+    };
+}
+
 const pdf = require("pdf-parse");
 
 // Convert stream to buffer
