@@ -22,7 +22,7 @@ export function ProtectedLayoutClient({ children }: { children: React.ReactNode 
                 isCollapsed ? "md:pl-20" : "md:pl-72"
             )}>
                 <ProtectedHeader />
-                <div className="flex-1 p-6">
+                <div className="flex-1 p-3 md:p-6">
                     {children}
                 </div>
             </main>

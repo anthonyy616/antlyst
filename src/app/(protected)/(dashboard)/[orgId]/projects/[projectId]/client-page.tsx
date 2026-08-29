@@ -77,11 +77,11 @@ export default function ProjectDashboardClient({ projectId }: ProjectDashboardCl
     }
 
     return (
-        <div className="flex h-[calc(100vh-65px)] overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex flex-col lg:flex-row h-[calc(100vh-65px)] overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-3 md:p-6">
                 <DashboardView config={config} />
             </div>
-            <div className="w-[350px] border-l border-slate-200 bg-slate-50 h-full">
+            <div className="w-full lg:w-[350px] border-t lg:border-t-0 lg:border-l border-slate-200 bg-slate-50 dark:bg-slate-900 h-[300px] lg:h-full overflow-y-auto">
                 <ProjectFeed projectId={projectId} initialData={feedData} />
             </div>
         </div>

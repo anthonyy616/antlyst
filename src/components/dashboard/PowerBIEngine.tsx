@@ -139,10 +139,10 @@ export default function PowerBIEngine({ analysisResult }: PowerBIEngineProps) {
     if (!mounted) return <div className="p-8">Loading Dashboard Engine...</div>;
 
     return (
-        <div className="bg-[#f3f4f6] dark:bg-slate-950 min-h-screen p-4">
+        <div className="bg-[#f3f4f6] dark:bg-slate-950 min-h-screen p-3 md:p-4">
 
             {/* KPI Section (Static Grid) */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
                 {kpis?.map((kpi: any, idx: number) => (
                     <div key={idx} className="h-24">
                         <KPICard

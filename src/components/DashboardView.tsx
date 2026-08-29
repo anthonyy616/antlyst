@@ -31,9 +31,9 @@ export function DashboardView({ config, loading }: DashboardViewProps) {
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-4 md:space-y-6 animate-in fade-in duration-500">
             {/* KPI Section */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
                 {config.kpis.map((kpi, idx) => (
                     <motion.div
                         key={idx}
@@ -103,11 +103,11 @@ export function DashboardView({ config, loading }: DashboardViewProps) {
                         transition={{ delay: 0.3 + (idx * 0.1) }}
                         className={getGridClass(chart)}
                     >
-                        <Card className="h-full min-h-[400px]">
-                            <CardHeader>
-                                <CardTitle>{chart.title}</CardTitle>
+                        <Card className="h-full min-h-[250px] md:min-h-[400px]">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-sm md:text-base truncate">{chart.title}</CardTitle>
                             </CardHeader>
-                            <CardContent className="h-[350px]">
+                            <CardContent className="h-[200px] md:h-[350px]">
                                 <Plot
                                     data={chart.data}
                                     layout={{

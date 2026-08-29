@@ -177,6 +177,18 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
         }] as any;
     }, [chartData]);
 
+    const plotlyDataArea = useMemo(() => {
+        return [{
+            x: chartData.map(d => d.x),
+            y: chartData.map(d => d.y),
+            type: 'scatter',
+            fill: 'tozeroy',
+            fillcolor: 'rgba(94, 48, 235, 0.15)',
+            mode: 'lines',
+            line: { color: '#5e30eb', width: 2 }
+        }] as any;
+    }, [chartData]);
+
     const commonLayout = {
         width: undefined,
         height: undefined,
@@ -194,7 +206,7 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
 
             {/* Control Panel */}
             {/* Control Panel */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 p-3 md:p-4 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
                 <div className="space-y-2">
                     <Label>X Axis (Category)</Label>
                     <Select value={xKey} onValueChange={setXKey}>
@@ -239,21 +251,22 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Bar Chart ({aggType === 'avg' ? 'Average' : aggType.charAt(0).toUpperCase() + aggType.slice(1)} of {yKey} by {xKey})</CardTitle>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm md:text-base">Bar Chart ({aggType === 'avg' ? 'Average' : aggType.charAt(0).toUpperCase() + aggType.slice(1)} of {yKey} by {xKey})</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[400px]">
+                    <CardContent className="h-[250px] md:h-[350px] lg:h-[400px]">
                         <Plot
                             data={plotlyDataBar}
                             layout={{
                                 ...commonLayout,
-                                yaxis: { title: { text: `${aggType} of ${yKey}` } } // Ensure title updates
+                                yaxis: { title: { text: `${aggType} of ${yKey}` } },
+                                margin: { l: 40, r: 10, t: 10, b: 40 }
                             }}
                             config={{
                                 scrollZoom: true,
-                                displayModeBar: true,
+                                displayModeBar: false,
                                 responsive: true,
                                 displaylogo: false
                             }}
@@ -264,19 +277,44 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                 </Card>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Line Chart (Trend of {yKey} - {aggType})</CardTitle>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm md:text-base">Line Chart (Trend of {yKey} - {aggType})</CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[400px]">
+                    <CardContent className="h-[250px] md:h-[350px] lg:h-[400px]">
                         <Plot
                             data={plotlyDataLine}
                             layout={{
                                 ...commonLayout,
-                                yaxis: { title: { text: `${aggType} of ${yKey}` } }
+                                yaxis: { title: { text: `${aggType} of ${yKey}` } },
+                                margin: { l: 40, r: 10, t: 10, b: 40 }
                             }}
                             config={{
                                 scrollZoom: true,
-                                displayModeBar: true,
+                                displayModeBar: false,
+                                responsive: true,
+                                displaylogo: false
+                            }}
+                            style={{ width: '100%', height: '100%' }}
+                            useResizeHandler={true}
+                        />
+                    </CardContent>
+                </Card>
+
+                <Card className="md:col-span-2 lg:col-span-1">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm md:text-base">Area Chart (Volume of {yKey} - {aggType})</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-[250px] md:h-[350px] lg:h-[400px]">
+                        <Plot
+                            data={plotlyDataArea}
+                            layout={{
+                                ...commonLayout,
+                                yaxis: { title: { text: `${aggType} of ${yKey}` } },
+                                margin: { l: 40, r: 10, t: 10, b: 40 }
+                            }}
+                            config={{
+                                scrollZoom: true,
+                                displayModeBar: false,
                                 responsive: true,
                                 displaylogo: false
                             }}
@@ -352,7 +390,7 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                                     </Button>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 md:gap-4">
                                         <StatBox label="Count" value={stats.count} />
                                         {stats.type === 'numeric' ? (
                                             <>

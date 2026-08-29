@@ -73,14 +73,14 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
     }, [data, xCol, yCol, zCol]);
 
     return (
-        <div className="p-6 space-y-6 bg-slate-900 text-white min-h-screen">
+        <div className="p-3 md:p-6 space-y-4 md:space-y-6 bg-slate-900 text-white min-h-screen">
             {/* Control Panel */}
             <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                    <CardTitle className="text-white">ML View Configuration</CardTitle>
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-white text-base md:text-lg">ML View Configuration</CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-wrap gap-4">
-                    <div className="w-[200px]">
+                <CardContent className="flex flex-col sm:flex-row flex-wrap gap-3 md:gap-4">
+                    <div className="w-full sm:w-[200px]">
                         <label className="text-sm font-medium mb-1 block text-slate-300">X Axis</label>
                         <Select value={xCol} onValueChange={setXCol}>
                             <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
@@ -93,7 +93,7 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="w-[200px]">
+                    <div className="w-full sm:w-[200px]">
                         <label className="text-sm font-medium mb-1 block text-slate-300">Y Axis</label>
                         <Select value={yCol} onValueChange={setYCol}>
                             <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
@@ -106,7 +106,7 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="w-[200px]">
+                    <div className="w-full sm:w-[200px]">
                         <label className="text-sm font-medium mb-1 block text-slate-300">Z Axis (Optional)</label>
                         <Select value={zCol} onValueChange={setZCol}>
                             <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
@@ -124,10 +124,10 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
             </Card>
 
             <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                    <CardTitle className="text-white">Multi-Dimensional Feature Analysis</CardTitle>
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-white text-base md:text-lg">Multi-Dimensional Feature Analysis</CardTitle>
                 </CardHeader>
-                <CardContent className="flex justify-center h-[600px]">
+                <CardContent className="flex justify-center h-[300px] md:h-[450px] lg:h-[600px]">
                     {loading ? (
                         <div className="flex items-center gap-2">
                             <Loader2 className="animate-spin" /> Loading analysis...
@@ -138,7 +138,7 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
                                 data={[plotData]}
                                 layout={{
                                     autosize: true,
-                                    title: { text: `${xCol} vs ${yCol} ${zCol !== 'none' ? 'vs ' + zCol : ''}`, font: { color: '#fff' } },
+                                    title: { text: `${xCol} vs ${yCol} ${zCol !== 'none' ? 'vs ' + zCol : ''}`, font: { color: '#fff', size: 12 } },
                                     paper_bgcolor: 'rgba(0,0,0,0)',
                                     plot_bgcolor: 'rgba(0,0,0,0)',
                                     scene: {
@@ -148,7 +148,7 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
                                     },
                                     xaxis: { title: { text: xCol }, color: '#fff', gridcolor: '#444' },
                                     yaxis: { title: { text: yCol }, color: '#fff', gridcolor: '#444' },
-                                    margin: { l: 50, r: 20, b: 50, t: 50, pad: 4 }
+                                    margin: { l: 40, r: 10, b: 40, t: 40, pad: 4 }
                                 }}
                                 useResizeHandler={true}
                                 style={{ width: '100%', height: '100%' }}
