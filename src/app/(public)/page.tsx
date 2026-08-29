@@ -1,7 +1,6 @@
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingHero } from '@/components/landing/LandingHero';
 import { LandingFeatures } from '@/components/landing/LandingFeatures';
-import { PricingTable } from '@/components/marketing/PricingTable';
 
 export const dynamic = "force-static";
 export const revalidate = 3600;
@@ -19,9 +18,6 @@ export default function Home() {
                 <LandingHero />
                 <LandingFeatures />
             </main>
-
-            {/* Pricing Section on Home */}
-            <PricingTable />
 
             {/* Footer */}
             <footer className="border-t py-8 relative z-10 bg-background/80 backdrop-blur-sm">
