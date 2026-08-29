@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 // Dynamically import Plotly
 const Plot = dynamic(() => import('react-plotly.js'), {
     ssr: false,
-    loading: () => <div className="h-full w-full flex items-center justify-center text-muted-foreground">Loading Chart Engine...</div>
+    loading: () => <div className="h-full w-full flex items-center justify-center text-muted-foreground text-sm">Loading charts...</div>
 });
 
 interface SimpleEngineProps {
@@ -22,7 +22,7 @@ interface SimpleEngineProps {
 
 export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
     if (!analysisResult || !analysisResult.stats || !analysisResult.stats.preview) {
-        return <div>No data available</div>;
+        return <div className="p-4 text-muted-foreground">No data available</div>;
     }
 
     const data = analysisResult.stats.preview;
@@ -68,7 +68,6 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
     };
 
     useEffect(() => {
-        // Reset or init stat keys when columns change
         if (numericColumns.length > 0) {
             if (numericColumns.includes(yKey)) {
                 setStatKeys([yKey]);
@@ -78,7 +77,6 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
         }
     }, [numericColumns, yKey]);
 
-    // Helper function to calculate stats for a single column
     const calculateStats = (key: string) => {
         const isNumeric = numericColumns.includes(key);
         const values = data.map((d: any) => d[key]);
@@ -116,7 +114,6 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
             groups[key].max = Math.max(groups[key].max, val);
         });
 
-        // Convert back to array
         const aggregated = Object.entries(groups).map(([name, stats]) => {
             let value = 0;
             switch (aggType) {
@@ -130,14 +127,12 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
             return {
                 x: isXNumeric ? Number(name) : name,
                 y: value,
-                // Extra meta for hover if needed
                 count: stats.count,
                 sum: stats.sum,
                 avg: stats.sum / stats.count
             };
         });
 
-        // Sort
         if (isXNumeric) {
             return aggregated.sort((a, b) => (a.x as number) - (b.x as number));
         } else {
@@ -172,8 +167,8 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
             y: chartData.map(d => d.y),
             type: 'scatter',
             mode: 'lines+markers',
-            marker: { color: '#52d6fc', size: 6 },
-            line: { width: 3 }
+            marker: { color: '#52d6fc', size: 4 },
+            line: { width: 2 }
         }] as any;
     }, [chartData]);
 
@@ -189,28 +184,35 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
         }] as any;
     }, [chartData]);
 
+    // Short label for aggregation
+    const aggLabel = aggType === 'avg' ? 'Avg' : aggType.charAt(0).toUpperCase() + aggType.slice(1);
+
     const commonLayout = {
-        width: undefined,
-        height: undefined,
         autosize: true,
-        margin: { l: 50, r: 20, t: 20, b: 50 },
+        margin: { l: 35, r: 5, t: 5, b: 55 },
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: '#71717a' }, // zinc-500
-        xaxis: { title: { text: xKey } },
-        yaxis: { title: { text: `${aggType} of ${yKey}` } }
+        font: { color: '#71717a', size: 9 },
+        xaxis: {
+            tickangle: -45,
+            tickfont: { size: 8 },
+            automargin: true as const,
+        },
+        yaxis: {
+            tickfont: { size: 8 },
+            automargin: true as const,
+        }
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3 sm:space-y-4 md:space-y-6 w-full min-w-0">
 
             {/* Control Panel */}
-            {/* Control Panel */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 p-3 md:p-4 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
-                <div className="space-y-2">
-                    <Label>X Axis (Category)</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 p-2 sm:p-3 md:p-4 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
+                <div className="space-y-1 sm:space-y-1.5">
+                    <Label className="text-xs sm:text-sm">X Axis</Label>
                     <Select value={xKey} onValueChange={setXKey}>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9 sm:h-10">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -218,15 +220,15 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="space-y-2">
-                    <Label>Y Axis (Value)</Label>
+                <div className="space-y-1 sm:space-y-1.5">
+                    <Label className="text-xs sm:text-sm">Y Axis</Label>
                     <Select value={yKey} onValueChange={(val) => {
                         setYKey(val);
                         if (!statKeys.includes(val) && numericColumns.includes(val)) {
                             setStatKeys(prev => [...prev, val]);
                         }
                     }}>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9 sm:h-10">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -234,10 +236,10 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="space-y-2">
-                    <Label>Aggregation</Label>
+                <div className="space-y-1 sm:space-y-1.5">
+                    <Label className="text-xs sm:text-sm">Aggregation</Label>
                     <Select value={aggType} onValueChange={(val: any) => setAggType(val)}>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9 sm:h-10">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -251,73 +253,53 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm md:text-base">Bar Chart ({aggType === 'avg' ? 'Average' : aggType.charAt(0).toUpperCase() + aggType.slice(1)} of {yKey} by {xKey})</CardTitle>
+            {/* Charts */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <Card className="overflow-hidden">
+                    <CardHeader className="pb-1 px-3 pt-3 sm:px-4 sm:pt-4">
+                        <CardTitle className="text-xs sm:text-sm font-medium truncate">
+                            Bar · {aggLabel} of {yKey}
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[250px] md:h-[350px] lg:h-[400px]">
+                    <CardContent className="h-[220px] sm:h-[280px] md:h-[340px] lg:h-[400px] px-1 sm:px-2 pb-2">
                         <Plot
                             data={plotlyDataBar}
-                            layout={{
-                                ...commonLayout,
-                                yaxis: { title: { text: `${aggType} of ${yKey}` } },
-                                margin: { l: 40, r: 10, t: 10, b: 40 }
-                            }}
-                            config={{
-                                scrollZoom: true,
-                                displayModeBar: false,
-                                responsive: true,
-                                displaylogo: false
-                            }}
+                            layout={commonLayout}
+                            config={{ displayModeBar: false, responsive: true, displaylogo: false }}
                             style={{ width: '100%', height: '100%' }}
                             useResizeHandler={true}
                         />
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm md:text-base">Line Chart (Trend of {yKey} - {aggType})</CardTitle>
+                <Card className="overflow-hidden">
+                    <CardHeader className="pb-1 px-3 pt-3 sm:px-4 sm:pt-4">
+                        <CardTitle className="text-xs sm:text-sm font-medium truncate">
+                            Line · {aggLabel} of {yKey}
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[250px] md:h-[350px] lg:h-[400px]">
+                    <CardContent className="h-[220px] sm:h-[280px] md:h-[340px] lg:h-[400px] px-1 sm:px-2 pb-2">
                         <Plot
                             data={plotlyDataLine}
-                            layout={{
-                                ...commonLayout,
-                                yaxis: { title: { text: `${aggType} of ${yKey}` } },
-                                margin: { l: 40, r: 10, t: 10, b: 40 }
-                            }}
-                            config={{
-                                scrollZoom: true,
-                                displayModeBar: false,
-                                responsive: true,
-                                displaylogo: false
-                            }}
+                            layout={commonLayout}
+                            config={{ displayModeBar: false, responsive: true, displaylogo: false }}
                             style={{ width: '100%', height: '100%' }}
                             useResizeHandler={true}
                         />
                     </CardContent>
                 </Card>
 
-                <Card className="md:col-span-2 lg:col-span-1">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm md:text-base">Area Chart (Volume of {yKey} - {aggType})</CardTitle>
+                <Card className="md:col-span-2 lg:col-span-1 overflow-hidden">
+                    <CardHeader className="pb-1 px-3 pt-3 sm:px-4 sm:pt-4">
+                        <CardTitle className="text-xs sm:text-sm font-medium truncate">
+                            Area · {aggLabel} of {yKey}
+                        </CardTitle>
                     </CardHeader>
-                    <CardContent className="h-[250px] md:h-[350px] lg:h-[400px]">
+                    <CardContent className="h-[220px] sm:h-[280px] md:h-[340px] lg:h-[400px] px-1 sm:px-2 pb-2">
                         <Plot
                             data={plotlyDataArea}
-                            layout={{
-                                ...commonLayout,
-                                yaxis: { title: { text: `${aggType} of ${yKey}` } },
-                                margin: { l: 40, r: 10, t: 10, b: 40 }
-                            }}
-                            config={{
-                                scrollZoom: true,
-                                displayModeBar: false,
-                                responsive: true,
-                                displaylogo: false
-                            }}
+                            layout={commonLayout}
+                            config={{ displayModeBar: false, responsive: true, displaylogo: false }}
                             style={{ width: '100%', height: '100%' }}
                             useResizeHandler={true}
                         />
@@ -326,18 +308,20 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
             </div>
 
             {/* Advanced Stats Section */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5 text-brand-purple" />
-                        Advanced Statistics
+            <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-sm sm:text-lg md:text-xl font-semibold flex items-center gap-1.5 sm:gap-2 shrink-0">
+                        <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-brand-purple" />
+                        <span className="hidden sm:inline">Advanced Statistics</span>
+                        <span className="sm:hidden">Stats</span>
                     </h2>
 
                     <Popover>
                         <PopoverTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2">
-                                <Plus className="w-4 h-4" />
-                                Add Column Analysis
+                            <Button variant="outline" size="sm" className="gap-1 text-xs shrink-0">
+                                <Plus className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Add Column Analysis</span>
+                                <span className="sm:hidden">Add</span>
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-[200px] p-0" align="end">
@@ -373,35 +357,37 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                     </Popover>
                 </div>
 
-                <div className="grid gap-6">
+                <div className="grid gap-3 sm:gap-4 md:gap-6">
                     {statKeys.map(key => {
                         const stats = calculateStats(key);
                         return (
                             <Card key={key} className="relative group">
-                                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-base font-medium">Statistics for: <span className="text-brand-purple">{key}</span></CardTitle>
+                                <CardHeader className="flex flex-row items-center justify-between pb-2 px-3 sm:px-4 pt-3 sm:pt-4">
+                                    <CardTitle className="text-xs sm:text-sm md:text-base font-medium truncate">
+                                        Stats: <span className="text-brand-purple">{key}</span>
+                                    </CardTitle>
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="h-6 w-6 shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                                         onClick={() => removeStatKey(key)}
                                     >
-                                        <X className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+                                        <X className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
                                     </Button>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 md:gap-4">
+                                <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                                         <StatBox label="Count" value={stats.count} />
                                         {stats.type === 'numeric' ? (
                                             <>
                                                 <StatBox label="Sum" value={stats.sum?.toLocaleString() || '-'} />
-                                                <StatBox label="Average" value={stats.avg?.toFixed(2) || '-'} />
+                                                <StatBox label="Avg" value={stats.avg?.toFixed(2) || '-'} />
                                                 <StatBox label="Min" value={stats.min ?? '-'} />
                                                 <StatBox label="Max" value={stats.max ?? '-'} />
                                             </>
                                         ) : (
                                             <>
-                                                <StatBox label="Unique Values" value={stats.unique ?? '-'} />
+                                                <StatBox label="Unique" value={stats.unique ?? '-'} />
                                                 <StatBox label="Type" value="Categorical" />
                                             </>
                                         )}
@@ -413,30 +399,28 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                 </div>
             </div>
 
+            {/* Data Preview */}
             <Card>
-                <CardHeader>
-                    <CardTitle>Data Preview</CardTitle>
+                <CardHeader className="px-3 sm:px-4 pt-3 sm:pt-4 pb-2">
+                    <CardTitle className="text-sm sm:text-base">Data Preview</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="overflow-x-auto max-h-[400px]">
+                <CardContent className="px-2 sm:px-4 pb-3 sm:pb-4">
+                    <div className="overflow-x-auto max-h-[300px] sm:max-h-[400px]">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     {columns.map((col: string) => (
                                         <TableHead
                                             key={col}
-                                            className="cursor-pointer hover:bg-slate-50 transition-colors select-none"
+                                            className="cursor-pointer hover:bg-slate-50 transition-colors select-none text-[10px] sm:text-xs"
                                             onClick={() => handleSort(col)}
                                         >
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-0.5 whitespace-nowrap">
                                                 {col}
                                                 {sortConfig?.key === col && (
                                                     <span className="text-brand-purple">
                                                         {sortConfig.direction === 'asc' ? '↑' : '↓'}
                                                     </span>
-                                                )}
-                                                {sortConfig?.key !== col && (
-                                                    <span className="text-slate-300 opacity-0 group-hover:opacity-100">↕</span>
                                                 )}
                                             </div>
                                         </TableHead>
@@ -447,7 +431,7 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                                 {sortedData.slice(0, 50).map((row: any, i: number) => (
                                     <TableRow key={i}>
                                         {columns.map((col: string) => (
-                                            <TableCell key={`${i}-${col}`}>
+                                            <TableCell key={`${i}-${col}`} className="text-[10px] sm:text-xs">
                                                 {row[col]}
                                             </TableCell>
                                         ))}
@@ -464,9 +448,9 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
 
 function StatBox({ label, value }: { label: string, value: string | number }) {
     return (
-        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg border dark:border-slate-700">
-            <div className="text-sm text-slate-500 dark:text-slate-400">{label}</div>
-            <div className="text-xl font-bold text-slate-900 dark:text-slate-100 overflow-hidden text-ellipsis">{value}</div>
+        <div className="bg-slate-100 dark:bg-slate-800 p-2 sm:p-3 md:p-4 rounded-lg border dark:border-slate-700 min-w-0">
+            <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">{label}</div>
+            <div className="text-sm sm:text-base md:text-xl font-bold text-slate-900 dark:text-slate-100 overflow-hidden text-ellipsis">{value}</div>
         </div>
     );
 }

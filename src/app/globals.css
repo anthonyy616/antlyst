@@ -149,6 +149,7 @@
   html,
   body {
     @apply bg-transparent text-foreground;
+    overflow-x: hidden;
   }
 }
 
@@ -160,5 +161,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
   }
 }

@@ -61,27 +61,27 @@ export default async function DashboardPage({
   };
 
   return (
-    <div className="container mx-auto py-4 md:py-6 px-3 md:px-4 max-w-[1600px]">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
-        <div className="flex items-center gap-3">
+    <div className="py-4 md:py-6 px-2 sm:px-3 md:px-4 max-w-[1600px] mx-auto overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3 md:mb-6">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Link href={`/${orgId}/projects/${projectId}`}>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="shrink-0">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div className="min-w-0">
-            <h1 className="text-lg md:text-2xl font-bold truncate">{project.name}</h1>
-            <p className="text-xs md:text-sm text-slate-500 capitalize">{style} Dashboard</p>
+            <h1 className="text-base sm:text-lg md:text-2xl font-bold truncate">{project.name}</h1>
+            <p className="text-[10px] sm:text-xs md:text-sm text-slate-500 capitalize">{style} Dashboard</p>
           </div>
         </div>
 
-        <div className="flex gap-1.5 md:gap-2 overflow-x-auto">
+        <div className="flex gap-1 sm:gap-1.5 md:gap-2 shrink-0">
           {['simple', 'ml', 'powerbi'].map((s) => (
             <Link key={s} href={`/${orgId}/projects/${projectId}/dashboard/${s}`}>
               <Button
                 variant={style === s ? "default" : "outline"}
                 size="sm"
-                className="capitalize text-xs md:text-sm"
+                className="capitalize text-[10px] sm:text-xs md:text-sm px-2 sm:px-3"
               >
                 {s}
               </Button>
@@ -90,7 +90,7 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm min-h-[400px] md:min-h-[800px]">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm min-h-[400px] md:min-h-[800px] overflow-hidden">
         {renderEngine()}
       </div>
     </div>

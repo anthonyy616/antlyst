@@ -40,13 +40,13 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
     const analysisResult = latestFile?.analysisResult;
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <header className="bg-white border-b px-6 py-4">
-                <h1 className="text-2xl font-bold text-gray-800">{project.name}</h1>
-                <p className="text-sm text-gray-500">Dashboard</p>
+        <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+            <header className="bg-white border-b px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 truncate">{project.name}</h1>
+                <p className="text-xs sm:text-sm text-gray-500">Dashboard</p>
             </header>
 
-            <main className="container mx-auto py-8 px-4 space-y-8">
+            <main className="py-4 sm:py-6 md:py-8 px-2 sm:px-3 md:px-4 space-y-4 sm:space-y-6 md:space-y-8 max-w-full">
                 {!latestFile ? (
                     <Card>
                         <CardHeader>
