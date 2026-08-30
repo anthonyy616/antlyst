@@ -1,41 +1,29 @@
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 
-// Create a new Redis instance with credentials from environment variables
-const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+// Only create Redis/limiters if env vars are present
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-/**
- * General Rate Limiter (Public API and Website)
- * 100 requests per minute per IP
- */
-export const generalLimiter = new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(100, "60 s"),
-    analytics: true,
-    prefix: "@ratelimit/general",
-});
+const redis = redisUrl && redisToken
+    ? new Redis({ url: redisUrl, token: redisToken })
+    : null;
 
-/**
- * AI Endpoints Rate Limiter
- * 10 requests per minute per User (or IP if not logged in)
- */
-export const aiLimiter = new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(10, "60 s"),
-    analytics: true,
-    prefix: "@ratelimit/ai",
-});
+function createLimiter(prefix: string, window: Parameters<typeof Ratelimit.slidingWindow>) {
+    if (!redis) return null;
+    return new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(...window),
+        analytics: true,
+        prefix,
+    });
+}
 
-/**
- * Upload Rate Limiter
- * 20 uploads per hour per User
- */
-export const uploadLimiter = new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(20, "1 h"),
-    analytics: true,
-    prefix: "@ratelimit/upload",
-});
+/** No-op limiter that always succeeds when Redis is unavailable */
+const noopLimiter = {
+    limit: async (_identifier: string) => ({ success: true, limit: 0, remaining: 0, reset: 0 }),
+};
+
+export const generalLimiter = createLimiter("@ratelimit/general", [100, "60 s"]) ?? noopLimiter;
+export const aiLimiter = createLimiter("@ratelimit/ai", [10, "60 s"]) ?? noopLimiter;
+export const uploadLimiter = createLimiter("@ratelimit/upload", [20, "1 h"]) ?? noopLimiter;
