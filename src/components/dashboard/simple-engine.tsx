@@ -104,11 +104,11 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
 
     useEffect(() => {
         if (numericColumns.length > 0) {
-            if (numericColumns.includes(yKey)) {
-                setStatKeys([yKey]);
-            } else {
-                setStatKeys([numericColumns[0]]);
-            }
+            const newKey = numericColumns.includes(yKey) ? yKey : numericColumns[0];
+            setStatKeys(prev => {
+                if (prev.length === 1 && prev[0] === newKey) return prev;
+                return [newKey];
+            });
         }
     }, [numericColumns, yKey]);
 

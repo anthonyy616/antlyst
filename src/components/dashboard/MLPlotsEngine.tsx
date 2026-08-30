@@ -35,12 +35,12 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
     const [yCol, setYCol] = useState<string>('');
     const [zCol, setZCol] = useState<string>('');
 
-    // Initialize defaults when data loads
+    // Initialize defaults when data loads — use functional updates to avoid loops
     useEffect(() => {
         if (analysisResult && numericCols.length > 0) {
-            setXCol(numericCols[0] || '');
-            setYCol(numericCols[1] || numericCols[0] || '');
-            setZCol(numericCols[2] || numericCols[0] || '');
+            setXCol(prev => prev || numericCols[0] || '');
+            setYCol(prev => prev || numericCols[1] || numericCols[0] || '');
+            setZCol(prev => prev || numericCols[2] || numericCols[0] || '');
             setLoading(false);
         }
     }, [analysisResult, numericCols]);
