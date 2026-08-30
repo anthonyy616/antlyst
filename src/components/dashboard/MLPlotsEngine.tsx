@@ -45,12 +45,8 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
         }
     }, [analysisResult, numericCols]);
 
-    if (!analysisResult || !data) {
-        return <div>No data available</div>;
-    }
-
     const plotData = useMemo(() => {
-        if (!xCol || !yCol) return null;
+        if (!data || !xCol || !yCol) return null;
 
         const is3D = !!zCol && zCol !== 'none';
 
@@ -75,6 +71,10 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
 
         return trace;
     }, [data, xCol, yCol, zCol]);
+
+    if (!analysisResult || !data) {
+        return <div>No data available</div>;
+    }
 
     return (
         <div className="p-3 md:p-6 space-y-4 md:space-y-6 bg-slate-900 text-white min-h-screen">

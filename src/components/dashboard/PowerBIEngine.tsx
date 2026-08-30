@@ -38,14 +38,11 @@ function PowerBIEngineInner({ analysisResult }: PowerBIEngineProps) {
         }
     }, [analysisResult]);
 
-    if (!analysisResult || !analysisResult.stats || !analysisResult.stats.preview) {
-        return <div className="p-8 text-center text-muted-foreground">No data available for Power BI Engine</div>;
-    }
-
-    const { stats, kpis } = analysisResult;
-    const rawData = stats.preview;
-    const columns = stats.columns || [];
-    const columnMeta = stats.columnMeta || {};
+    // ALL hooks must be called unconditionally — before any early returns
+    const { stats, kpis } = analysisResult || {};
+    const rawData = stats?.preview || [];
+    const columns = stats?.columns || [];
+    const columnMeta = stats?.columnMeta || {};
 
     // Apply global filters to data
     const filteredData = useMemo(() => applyFilters(rawData), [rawData, applyFilters]);
@@ -114,6 +111,10 @@ function PowerBIEngineInner({ analysisResult }: PowerBIEngineProps) {
 
         return { lg, md: lg, sm, xs };
     }, [charts]);
+
+    if (!analysisResult || !analysisResult.stats || !analysisResult.stats.preview) {
+        return <div className="p-8 text-center text-muted-foreground">No data available for Power BI Engine</div>;
+    }
 
     const handleChartUpdate = (newChartConfig: any) => {
         setCharts(prev => prev.map(c => c.id === newChartConfig.id ? newChartConfig : c));
