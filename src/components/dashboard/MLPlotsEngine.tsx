@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from 'lucide-react';
+import { GroupedColumnSelect } from './widgets/ColumnComponents';
+import { ColumnMeta } from '@/lib/column-validator';
 
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
@@ -19,12 +21,15 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
 
     const data = analysisResult?.stats?.preview;
     const columns = analysisResult?.stats?.columns || [];
+    const columnMeta: Record<string, ColumnMeta> = analysisResult?.stats?.columnMeta || {};
 
-    // Filter for numeric only
+    // Filter for numeric only using columnMeta
     const numericCols = useMemo(() => {
         if (!data || data.length === 0) return [];
-        return columns.filter((c: string) => typeof data[0][c] === 'number');
-    }, [columns, data]);
+        return columns.filter((c: string) =>
+            columnMeta[c]?.type === 'numeric' || (!columnMeta[c] && typeof data[0][c] === 'number')
+        );
+    }, [columns, data, columnMeta]);
 
     // State for axes
     const [xCol, setXCol] = useState<string>('');
@@ -82,29 +87,25 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
                 <CardContent className="flex flex-col sm:flex-row flex-wrap gap-3 md:gap-4">
                     <div className="w-full sm:w-[200px]">
                         <label className="text-sm font-medium mb-1 block text-slate-300">X Axis</label>
-                        <Select value={xCol} onValueChange={setXCol}>
-                            <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
-                                <SelectValue placeholder="Select X Axis" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {numericCols.map((c: string) => (
-                                    <SelectItem key={`x-${c}`} value={c}>{c}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <GroupedColumnSelect
+                            columns={numericCols}
+                            columnMeta={columnMeta}
+                            value={xCol}
+                            onChange={setXCol}
+                            placeholder="Select X Axis"
+                            className="bg-slate-900 border-slate-700 text-white"
+                        />
                     </div>
                     <div className="w-full sm:w-[200px]">
                         <label className="text-sm font-medium mb-1 block text-slate-300">Y Axis</label>
-                        <Select value={yCol} onValueChange={setYCol}>
-                            <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
-                                <SelectValue placeholder="Select Y Axis" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {numericCols.map((c: string) => (
-                                    <SelectItem key={`y-${c}`} value={c}>{c}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <GroupedColumnSelect
+                            columns={numericCols}
+                            columnMeta={columnMeta}
+                            value={yCol}
+                            onChange={setYCol}
+                            placeholder="Select Y Axis"
+                            className="bg-slate-900 border-slate-700 text-white"
+                        />
                     </div>
                     <div className="w-full sm:w-[200px]">
                         <label className="text-sm font-medium mb-1 block text-slate-300">Z Axis (Optional)</label>

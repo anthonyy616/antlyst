@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, X, BarChart3 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
+import { GroupedColumnSelect, ColumnTypeBadge } from "./widgets/ColumnComponents";
+import { ColumnMeta } from "@/lib/column-validator";
 
 // Dynamically import Plotly
 const Plot = dynamic(() => import('react-plotly.js'), {
@@ -27,14 +29,37 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
 
     const data = analysisResult.stats.preview;
     const columns = analysisResult.stats.columns || [];
+    const columnMeta: Record<string, ColumnMeta> = analysisResult.stats.columnMeta || {};
 
-    // Helper: Identify types
-    const numericColumns = useMemo(() => columns.filter((c: string) => typeof data[0][c] === 'number'), [columns, data]);
-    const stringColumns = useMemo(() => columns.filter((c: string) => typeof data[0][c] === 'string'), [columns, data]);
+    // Use columnMeta for column grouping, with fallback to typeof
+    const numericColumns = useMemo(
+        () => columns.filter((c: string) => columnMeta[c]?.type === 'numeric' || (!columnMeta[c] && typeof data[0]?.[c] === 'number')),
+        [columns, data, columnMeta]
+    );
+    const stringColumns = useMemo(
+        () => columns.filter((c: string) => columnMeta[c]?.type === 'categorical' || columnMeta[c]?.type === 'id' || (!columnMeta[c] && typeof data[0]?.[c] === 'string')),
+        [columns, data, columnMeta]
+    );
 
-    // Initial Defaults
-    const [xKey, setXKey] = useState<string>(stringColumns[0] || columns[0]);
-    const [yKey, setYKey] = useState<string>(numericColumns[0] || columns[1]);
+    // Initial Defaults — auto-select best columns from columnMeta
+    const bestX = useMemo(() => {
+        if (columnMeta && Object.keys(columnMeta).length > 0) {
+            return columns.find((col: string) => columnMeta[col]?.type === 'categorical' && (columnMeta[col]?.uniqueCount || 0) <= 20)
+                || columns.find((col: string) => columnMeta[col]?.type === 'categorical')
+                || stringColumns[0] || columns[0];
+        }
+        return stringColumns[0] || columns[0];
+    }, [columns, columnMeta, stringColumns]);
+
+    const bestY = useMemo(() => {
+        if (columnMeta && Object.keys(columnMeta).length > 0) {
+            return columns.find((col: string) => columnMeta[col]?.type === 'numeric') || numericColumns[0] || columns[1];
+        }
+        return numericColumns[0] || columns[1];
+    }, [columns, columnMeta, numericColumns]);
+
+    const [xKey, setXKey] = useState<string>(bestX);
+    const [yKey, setYKey] = useState<string>(bestY);
     const [aggType, setAggType] = useState<'sum' | 'avg' | 'min' | 'max' | 'count'>('avg');
 
     // Stats Selection State
@@ -211,30 +236,28 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 p-2 sm:p-3 md:p-4 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
                 <div className="space-y-1 sm:space-y-1.5">
                     <Label className="text-xs sm:text-sm">X Axis</Label>
-                    <Select value={xKey} onValueChange={setXKey}>
-                        <SelectTrigger className="h-9 sm:h-10">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {columns.map((col: string) => <SelectItem key={col} value={col}>{col}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+                    <GroupedColumnSelect
+                        columns={columns}
+                        columnMeta={columnMeta}
+                        value={xKey}
+                        onChange={setXKey}
+                        className="h-9 sm:h-10"
+                    />
                 </div>
                 <div className="space-y-1 sm:space-y-1.5">
                     <Label className="text-xs sm:text-sm">Y Axis</Label>
-                    <Select value={yKey} onValueChange={(val) => {
-                        setYKey(val);
-                        if (!statKeys.includes(val) && numericColumns.includes(val)) {
-                            setStatKeys(prev => [...prev, val]);
-                        }
-                    }}>
-                        <SelectTrigger className="h-9 sm:h-10">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {columns.map((col: string) => <SelectItem key={col} value={col}>{col}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+                    <GroupedColumnSelect
+                        columns={columns}
+                        columnMeta={columnMeta}
+                        value={yKey}
+                        onChange={(val) => {
+                            setYKey(val);
+                            if (!statKeys.includes(val) && numericColumns.includes(val)) {
+                                setStatKeys(prev => [...prev, val]);
+                            }
+                        }}
+                        className="h-9 sm:h-10"
+                    />
                 </div>
                 <div className="space-y-1 sm:space-y-1.5">
                     <Label className="text-xs sm:text-sm">Aggregation</Label>
@@ -324,33 +347,30 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                                 <span className="sm:hidden">Add</span>
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[200px] p-0" align="end">
+                        <PopoverContent className="w-[240px] p-0" align="end">
                             <div className="max-h-[300px] overflow-y-auto">
-                                <div className="p-2 text-xs font-semibold text-muted-foreground bg-slate-50 border-b">
-                                    Numeric Columns
-                                </div>
-                                {numericColumns.map((col: string) => (
-                                    <button
-                                        key={col}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 disabled:opacity-50"
-                                        onClick={() => addStatKey(col)}
-                                        disabled={statKeys.includes(col)}
-                                    >
-                                        {col}
-                                    </button>
-                                ))}
-                                <div className="p-2 text-xs font-semibold text-muted-foreground bg-slate-50 border-b border-t mt-1">
-                                    Categorical Columns
-                                </div>
-                                {stringColumns.map((col: string) => (
-                                    <button
-                                        key={col}
-                                        className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 disabled:opacity-50"
-                                        onClick={() => addStatKey(col)}
-                                        disabled={statKeys.includes(col)}
-                                    >
-                                        {col}
-                                    </button>
+                                {Object.entries({
+                                    numeric: { label: '📊 Numeric', cols: columns.filter((c: string) => columnMeta[c]?.type === 'numeric') },
+                                    categorical: { label: '📝 Categorical', cols: columns.filter((c: string) => columnMeta[c]?.type === 'categorical' || columnMeta[c]?.type === 'id') },
+                                    datetime: { label: '📅 DateTime', cols: columns.filter((c: string) => columnMeta[c]?.type === 'datetime') },
+                                    boolean: { label: '✓ Boolean', cols: columns.filter((c: string) => columnMeta[c]?.type === 'boolean') },
+                                }).filter(([, group]) => group.cols.length > 0).map(([type, group]) => (
+                                    <div key={type}>
+                                        <div className="p-2 text-xs font-semibold text-muted-foreground bg-slate-50 dark:bg-slate-800 border-b flex items-center gap-1">
+                                            {group.label} ({group.cols.length})
+                                        </div>
+                                        {group.cols.map((col: string) => (
+                                            <button
+                                                key={col}
+                                                className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 flex items-center gap-2"
+                                                onClick={() => addStatKey(col)}
+                                                disabled={statKeys.includes(col)}
+                                            >
+                                                <ColumnTypeBadge type={columnMeta[col]?.type || 'unknown'} />
+                                                {col}
+                                            </button>
+                                        ))}
+                                    </div>
                                 ))}
                             </div>
                         </PopoverContent>
