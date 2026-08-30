@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from 'lucide-react';
-import { GroupedColumnSelect } from './widgets/ColumnComponents';
 import { ColumnMeta } from '@/lib/column-validator';
 
 // Dynamically import Plotly to avoid SSR issues
@@ -87,25 +86,29 @@ export default function MLPlotsEngine({ analysisResult }: MLPlotsEngineProps) {
                 <CardContent className="flex flex-col sm:flex-row flex-wrap gap-3 md:gap-4">
                     <div className="w-full sm:w-[200px]">
                         <label className="text-sm font-medium mb-1 block text-slate-300">X Axis</label>
-                        <GroupedColumnSelect
-                            columns={numericCols}
-                            columnMeta={columnMeta}
-                            value={xCol}
-                            onChange={setXCol}
-                            placeholder="Select X Axis"
-                            className="bg-slate-900 border-slate-700 text-white"
-                        />
+                        <Select value={xCol} onValueChange={setXCol}>
+                            <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
+                                <SelectValue placeholder="Select X Axis" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {numericCols.map((c: string) => (
+                                    <SelectItem key={`x-${c}`} value={c}>{c}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="w-full sm:w-[200px]">
                         <label className="text-sm font-medium mb-1 block text-slate-300">Y Axis</label>
-                        <GroupedColumnSelect
-                            columns={numericCols}
-                            columnMeta={columnMeta}
-                            value={yCol}
-                            onChange={setYCol}
-                            placeholder="Select Y Axis"
-                            className="bg-slate-900 border-slate-700 text-white"
-                        />
+                        <Select value={yCol} onValueChange={setYCol}>
+                            <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
+                                <SelectValue placeholder="Select Y Axis" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {numericCols.map((c: string) => (
+                                    <SelectItem key={`y-${c}`} value={c}>{c}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="w-full sm:w-[200px]">
                         <label className="text-sm font-medium mb-1 block text-slate-300">Z Axis (Optional)</label>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, X, BarChart3 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
-import { GroupedColumnSelect, ColumnTypeBadge } from "./widgets/ColumnComponents";
+import { ColumnTypeBadge } from "./widgets/ColumnComponents";
 import { ColumnMeta } from "@/lib/column-validator";
 
 // Dynamically import Plotly
@@ -251,28 +251,30 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 p-2 sm:p-3 md:p-4 bg-white dark:bg-slate-900 rounded-lg border shadow-sm">
                 <div className="space-y-1 sm:space-y-1.5">
                     <Label className="text-xs sm:text-sm">X Axis</Label>
-                    <GroupedColumnSelect
-                        columns={columns}
-                        columnMeta={columnMeta}
-                        value={xKey}
-                        onChange={setXKey}
-                        className="h-9 sm:h-10"
-                    />
+                    <Select value={xKey} onValueChange={setXKey}>
+                        <SelectTrigger className="h-9 sm:h-10">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {columns.map((col: string) => <SelectItem key={col} value={col}>{col}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
                 </div>
                 <div className="space-y-1 sm:space-y-1.5">
                     <Label className="text-xs sm:text-sm">Y Axis</Label>
-                    <GroupedColumnSelect
-                        columns={columns}
-                        columnMeta={columnMeta}
-                        value={yKey}
-                        onChange={(val) => {
-                            setYKey(val);
-                            if (!statKeys.includes(val) && numericColumns.includes(val)) {
-                                setStatKeys(prev => [...prev, val]);
-                            }
-                        }}
-                        className="h-9 sm:h-10"
-                    />
+                    <Select value={yKey} onValueChange={(val) => {
+                        setYKey(val);
+                        if (!statKeys.includes(val) && numericColumns.includes(val)) {
+                            setStatKeys(prev => [...prev, val]);
+                        }
+                    }}>
+                        <SelectTrigger className="h-9 sm:h-10">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {columns.map((col: string) => <SelectItem key={col} value={col}>{col}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
                 </div>
                 <div className="space-y-1 sm:space-y-1.5">
                     <Label className="text-xs sm:text-sm">Aggregation</Label>
