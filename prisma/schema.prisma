@@ -219,6 +219,7 @@ model Project {
   dashboards     Dashboard[]
   analyses       Analysis[]
   posts          Post[]
+  dataSources    DataSource[]
 
   @@index([organizationId])
   @@index([ownerId])
@@ -286,6 +287,30 @@ model AnalysisResult {
   createdAt   DateTime @default(now())
 
   @@map("analysis_results")
+}
+
+model DataSource {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name         String
+  type         String   // "upload", "url", "api", "google-sheets", "s3"
+  config       Json?    // Store connection-specific config (URL, headers, etc.)
+  status       String   @default("pending") // pending, fetching, processing, ready, error
+  lastSyncAt   DateTime?
+  errorMessage String?
+
+  // Linked file (the fetched/uploaded data)
+  fileId       String?
+  file         File?    @relation(fields: [fileId], references: [id])
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+  @@map("data_sources")
 }
 
 model Post {
