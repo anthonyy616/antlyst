@@ -242,6 +242,7 @@ model File {
   updatedAt    DateTime @updatedAt
   
   analysisResult AnalysisResult?
+  dataSources    DataSource[]
 
   @@index([projectId])
   @@index([projectId, uploadStatus])

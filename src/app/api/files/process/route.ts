@@ -167,14 +167,19 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // 2. Generate Preview (1000 rows)
+        // 2. Enhanced Column Analysis
+        const { analyzeColumns } = await import('@/lib/column-validator');
+        const columnMeta = analyzeColumns(rows);
+
+        // 3. Generate Preview (1000 rows)
         const preview = rows.slice(0, 1000);
 
-        // 3. Stats Object
+        // 4. Stats Object
         const sanitizedStats = {
             rowCount,
             columns,
             schema,
+            columnMeta: columnMeta as any,
             preview
         };
 
