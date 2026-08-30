@@ -7,50 +7,25 @@ import MLPlotsEngine from './MLPlotsEngine';
 import PowerBIEngine from './PowerBIEngine';
 import { ExportButton } from './ExportButton';
 import { TemplateGallery } from './TemplateGallery';
-import { DataConnector, DataConnection } from './DataConnector';
+import { DataConnector } from './DataConnector';
 import { BarChart3, BrainCircuit, LayoutGrid, LayoutTemplate, Plug } from 'lucide-react';
 
 interface EngineWrapperProps {
     analysisResult: any;
+    projectId?: string;
 }
 
 type EngineType = 'simple' | 'ml' | 'powerbi';
 
-export default function EngineWrapper({ analysisResult }: EngineWrapperProps) {
+export default function EngineWrapper({ analysisResult, projectId }: EngineWrapperProps) {
     const [currentEngine, setCurrentEngine] = useState<EngineType>('simple');
     const [showTemplates, setShowTemplates] = useState(false);
     const [showConnectors, setShowConnectors] = useState(false);
-    const [connections, setConnections] = useState<DataConnection[]>([]);
 
     const columns = analysisResult?.stats?.columns || [];
     const sampleRow = analysisResult?.stats?.preview?.[0] || {};
 
-    const handleAddConnection = (conn: Omit<DataConnection, 'id' | 'status'>) => {
-        const newConn: DataConnection = {
-            ...conn,
-            id: `conn-${Date.now()}`,
-            status: 'connected',
-            lastSync: new Date().toISOString(),
-        };
-        setConnections(prev => [...prev, newConn]);
-    };
-
-    const handleRemoveConnection = (id: string) => {
-        setConnections(prev => prev.filter(c => c.id !== id));
-    };
-
-    const handleTestConnection = async (id: string): Promise<boolean> => {
-        // Simulate test
-        setConnections(prev => prev.map(c =>
-            c.id === id ? { ...c, status: 'connected' } : c
-        ));
-        return true;
-    };
-
     const handleApplyTemplate = (template: any) => {
-        // Apply template configuration to the current engine
-        const config = template.generate(columns, sampleRow);
-        // This would update the analysis result - for now just switch to powerbi
         setCurrentEngine('powerbi');
     };
 
@@ -84,10 +59,8 @@ export default function EngineWrapper({ analysisResult }: EngineWrapperProps) {
                             </Button>
                         ))}
 
-                        {/* Divider */}
                         <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
 
-                        {/* Template Gallery Button */}
                         <Button
                             variant="outline"
                             size="sm"
@@ -98,7 +71,6 @@ export default function EngineWrapper({ analysisResult }: EngineWrapperProps) {
                             <span className="hidden md:inline">Templates</span>
                         </Button>
 
-                        {/* Data Connector Button */}
                         <Button
                             variant="outline"
                             size="sm"
@@ -107,11 +79,6 @@ export default function EngineWrapper({ analysisResult }: EngineWrapperProps) {
                         >
                             <Plug size={14} />
                             <span className="hidden md:inline">Connect</span>
-                            {connections.length > 0 && (
-                                <span className="ml-1 h-4 w-4 rounded-full bg-green-500 text-white text-[10px] flex items-center justify-center">
-                                    {connections.length}
-                                </span>
-                            )}
                         </Button>
                     </div>
                 </div>
@@ -137,10 +104,8 @@ export default function EngineWrapper({ analysisResult }: EngineWrapperProps) {
             <DataConnector
                 open={showConnectors}
                 onClose={() => setShowConnectors(false)}
-                connections={connections}
-                onAddConnection={handleAddConnection}
-                onRemoveConnection={handleRemoveConnection}
-                onTestConnection={handleTestConnection}
+                projectId={projectId}
+                onDataSourceCreated={() => window.location.reload()}
             />
         </div>
     );

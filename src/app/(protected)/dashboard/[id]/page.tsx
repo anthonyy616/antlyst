@@ -66,7 +66,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
                                 </CardContent>
                             </Card>
                         ) : (
-                            <EngineWrapper analysisResult={analysisResult} />
+                            <EngineWrapper analysisResult={analysisResult} projectId={project.id} />
                         )}
 
                         {/* 

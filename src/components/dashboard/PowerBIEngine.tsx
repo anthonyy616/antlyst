@@ -45,6 +45,7 @@ function PowerBIEngineInner({ analysisResult }: PowerBIEngineProps) {
     const { stats, kpis } = analysisResult;
     const rawData = stats.preview;
     const columns = stats.columns || [];
+    const columnMeta = stats.columnMeta || {};
 
     // Apply global filters to data
     const filteredData = useMemo(() => applyFilters(rawData), [rawData, applyFilters]);
@@ -196,6 +197,7 @@ function PowerBIEngineInner({ analysisResult }: PowerBIEngineProps) {
                             title={title}
                             data={filteredData}
                             columns={columns}
+                            columnMeta={columnMeta}
                         />
                     </div>
                 );
