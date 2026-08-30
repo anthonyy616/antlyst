@@ -51,3 +51,5 @@ tunnel.txt
 *.sql 
 
 /personal
+
+.agent/*

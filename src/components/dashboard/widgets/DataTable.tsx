@@ -33,17 +33,17 @@ export function DataTable({ title, data, columns, columnMeta }: DataTableProps) 
                     <div className="flex gap-1.5 shrink-0">
                         {numericCount > 0 && (
                             <Badge variant="outline" className="text-[10px] gap-1">
-                                <span className="text-blue-500">📊</span> {numericCount}
+                                <span className="text-blue-500"></span> {numericCount}
                             </Badge>
                         )}
                         {categoricalCount > 0 && (
                             <Badge variant="outline" className="text-[10px] gap-1">
-                                <span className="text-green-500">📝</span> {categoricalCount}
+                                <span className="text-green-500"></span> {categoricalCount}
                             </Badge>
                         )}
                         {datetimeCount > 0 && (
                             <Badge variant="outline" className="text-[10px] gap-1">
-                                <span className="text-purple-500">📅</span> {datetimeCount}
+                                <span className="text-purple-500"></span> {datetimeCount}
                             </Badge>
                         )}
                     </div>

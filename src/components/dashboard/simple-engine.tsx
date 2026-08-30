@@ -350,10 +350,10 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                         <PopoverContent className="w-[240px] p-0" align="end">
                             <div className="max-h-[300px] overflow-y-auto">
                                 {Object.entries({
-                                    numeric: { label: '📊 Numeric', cols: columns.filter((c: string) => columnMeta[c]?.type === 'numeric') },
-                                    categorical: { label: '📝 Categorical', cols: columns.filter((c: string) => columnMeta[c]?.type === 'categorical' || columnMeta[c]?.type === 'id') },
-                                    datetime: { label: '📅 DateTime', cols: columns.filter((c: string) => columnMeta[c]?.type === 'datetime') },
-                                    boolean: { label: '✓ Boolean', cols: columns.filter((c: string) => columnMeta[c]?.type === 'boolean') },
+                                    numeric: { label: ' Numeric', cols: columns.filter((c: string) => columnMeta[c]?.type === 'numeric') },
+                                    categorical: { label: ' Categorical', cols: columns.filter((c: string) => columnMeta[c]?.type === 'categorical' || columnMeta[c]?.type === 'id') },
+                                    datetime: { label: ' DateTime', cols: columns.filter((c: string) => columnMeta[c]?.type === 'datetime') },
+                                    boolean: { label: ' Boolean', cols: columns.filter((c: string) => columnMeta[c]?.type === 'boolean') },
                                 }).filter(([, group]) => group.cols.length > 0).map(([type, group]) => (
                                     <div key={type}>
                                         <div className="p-2 text-xs font-semibold text-muted-foreground bg-slate-50 dark:bg-slate-800 border-b flex items-center gap-1">
