@@ -22,16 +22,27 @@ interface SimpleEngineProps {
     analysisResult: any;
 }
 
-export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
-    if (!analysisResult || !analysisResult.stats || !analysisResult.stats.preview) {
-        return <div className="p-4 text-muted-foreground">No data available</div>;
+// Helper to safely render cell values — converts objects to strings
+function renderCellValue(value: any): string {
+    if (value === null || value === undefined) return '—';
+    if (typeof value === 'object') {
+        try {
+            return JSON.stringify(value);
+        } catch {
+            return String(value);
+        }
     }
+    return String(value);
+}
 
-    const data = analysisResult.stats.preview;
-    const columns = analysisResult.stats.columns || [];
-    const columnMeta: Record<string, ColumnMeta> = analysisResult.stats.columnMeta || {};
+export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
+    // Compute data with safe accessors (before any hooks)
+    const data = analysisResult?.stats?.preview || [];
+    const columns = analysisResult?.stats?.columns || [];
+    const columnMeta: Record<string, ColumnMeta> = analysisResult?.stats?.columnMeta || {};
+    const hasData = data.length > 0 && columns.length > 0;
 
-    // Use columnMeta for column grouping, with fallback to typeof
+    // ALL hooks must be called unconditionally — before any early returns
     const numericColumns = useMemo(
         () => columns.filter((c: string) => columnMeta[c]?.type === 'numeric' || (!columnMeta[c] && typeof data[0]?.[c] === 'number')),
         [columns, data, columnMeta]
@@ -41,21 +52,20 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
         [columns, data, columnMeta]
     );
 
-    // Initial Defaults — auto-select best columns from columnMeta
     const bestX = useMemo(() => {
         if (columnMeta && Object.keys(columnMeta).length > 0) {
             return columns.find((col: string) => columnMeta[col]?.type === 'categorical' && (columnMeta[col]?.uniqueCount || 0) <= 20)
                 || columns.find((col: string) => columnMeta[col]?.type === 'categorical')
-                || stringColumns[0] || columns[0];
+                || stringColumns[0] || columns[0] || '';
         }
-        return stringColumns[0] || columns[0];
+        return stringColumns[0] || columns[0] || '';
     }, [columns, columnMeta, stringColumns]);
 
     const bestY = useMemo(() => {
         if (columnMeta && Object.keys(columnMeta).length > 0) {
-            return columns.find((col: string) => columnMeta[col]?.type === 'numeric') || numericColumns[0] || columns[1];
+            return columns.find((col: string) => columnMeta[col]?.type === 'numeric') || numericColumns[0] || columns[1] || '';
         }
-        return numericColumns[0] || columns[1];
+        return numericColumns[0] || columns[1] || '';
     }, [columns, columnMeta, numericColumns]);
 
     const [xKey, setXKey] = useState<string>(bestX);
@@ -229,6 +239,11 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
         }
     };
 
+    // NOW: early return AFTER all hooks have been called
+    if (!hasData) {
+        return <div className="p-4 text-muted-foreground">No data available</div>;
+    }
+
     return (
         <div className="space-y-3 sm:space-y-4 md:space-y-6 w-full min-w-0">
 
@@ -350,10 +365,10 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                         <PopoverContent className="w-[240px] p-0" align="end">
                             <div className="max-h-[300px] overflow-y-auto">
                                 {Object.entries({
-                                    numeric: { label: ' Numeric', cols: columns.filter((c: string) => columnMeta[c]?.type === 'numeric') },
-                                    categorical: { label: ' Categorical', cols: columns.filter((c: string) => columnMeta[c]?.type === 'categorical' || columnMeta[c]?.type === 'id') },
-                                    datetime: { label: ' DateTime', cols: columns.filter((c: string) => columnMeta[c]?.type === 'datetime') },
-                                    boolean: { label: ' Boolean', cols: columns.filter((c: string) => columnMeta[c]?.type === 'boolean') },
+                                    numeric: { label: 'Numeric', cols: columns.filter((c: string) => columnMeta[c]?.type === 'numeric') },
+                                    categorical: { label: 'Categorical', cols: columns.filter((c: string) => columnMeta[c]?.type === 'categorical' || columnMeta[c]?.type === 'id') },
+                                    datetime: { label: 'DateTime', cols: columns.filter((c: string) => columnMeta[c]?.type === 'datetime') },
+                                    boolean: { label: 'Boolean', cols: columns.filter((c: string) => columnMeta[c]?.type === 'boolean') },
                                 }).filter(([, group]) => group.cols.length > 0).map(([type, group]) => (
                                     <div key={type}>
                                         <div className="p-2 text-xs font-semibold text-muted-foreground bg-slate-50 dark:bg-slate-800 border-b flex items-center gap-1">
@@ -452,7 +467,7 @@ export default function SimpleEngine({ analysisResult }: SimpleEngineProps) {
                                     <TableRow key={i}>
                                         {columns.map((col: string) => (
                                             <TableCell key={`${i}-${col}`} className="text-[10px] sm:text-xs">
-                                                {row[col]}
+                                                {renderCellValue(row[col])}
                                             </TableCell>
                                         ))}
                                     </TableRow>

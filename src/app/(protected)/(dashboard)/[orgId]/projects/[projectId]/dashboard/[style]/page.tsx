@@ -45,7 +45,8 @@ export default async function DashboardPage({
     }
   });
 
-  const analysisResult = analysis?.stats as any || null;
+  // Pass the full analysis record so engines can access analysisResult.stats.preview etc.
+  const analysisResult = analysis as any || null;
 
   const renderEngine = () => {
     switch (style) {
