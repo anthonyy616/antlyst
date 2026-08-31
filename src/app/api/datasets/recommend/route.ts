@@ -1,0 +1,135 @@
+/**
+ * POST /api/datasets/recommend
+ *
+ * Generate chart recommendations based on dataset structure.
+ * Accepts a fileId to analyze from R2, or inline data.
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { prisma } from '@/lib/prisma';
+import { r2Client, R2_BUCKET_NAME } from '@/lib/r2';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { Readable } from 'stream';
+import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
+import { analyzeColumns } from '@/lib/column-validator';
+import { recommendCharts } from '@/lib/chart-recommender';
+import { z } from 'zod';
+
+const recommendSchema = z.object({
+    fileId: z.string().optional(),
+    projectId: z.string().optional(),
+    data: z.array(z.record(z.string(), z.any())).optional(),
+    maxRecommendations: z.number().min(1).max(20).optional(),
+}).refine(
+    (data) => data.fileId || data.data,
+    { message: 'Either fileId or data array is required' }
+);
+
+async function streamToBuffer(stream: Readable): Promise<Buffer> {
+    const chunks: any[] = [];
+    return new Promise((resolve, reject) => {
+        stream.on('data', (chunk) => chunks.push(chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(Buffer.concat(chunks)));
+    });
+}
+
+export async function POST(req: NextRequest) {
+    try {
+        const { userId, orgId } = await auth();
+        if (!userId || !orgId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await req.json();
+        const validation = recommendSchema.safeParse(body);
+
+        if (!validation.success) {
+            return NextResponse.json(
+                { error: 'Invalid request', details: validation.error.issues },
+                { status: 400 }
+            );
+        }
+
+        const { fileId, projectId, data: inlineData, maxRecommendations } = validation.data;
+
+        let rows: any[];
+
+        if (inlineData && inlineData.length > 0) {
+            rows = inlineData;
+        } else if (fileId) {
+            const fileRecord = await prisma.file.findUnique({ where: { id: fileId } });
+            if (!fileRecord) {
+                return NextResponse.json({ error: 'File not found' }, { status: 404 });
+            }
+
+            if (projectId) {
+                const project = await prisma.project.findUnique({ where: { id: projectId } });
+                if (!project || project.organizationId !== orgId) {
+                    return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+                }
+            }
+
+            const command = new GetObjectCommand({
+                Bucket: R2_BUCKET_NAME,
+                Key: fileRecord.r2Key,
+            });
+
+            const response = await r2Client.send(command);
+            if (!response.Body) {
+                return NextResponse.json({ error: 'Failed to read file' }, { status: 500 });
+            }
+
+            const buffer = await streamToBuffer(response.Body as unknown as Readable);
+            const fileName = fileRecord.fileName.toLowerCase();
+
+            if (fileName.endsWith('.csv')) {
+                const result = Papa.parse(buffer.toString('utf-8'), {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                });
+                rows = result.data as any[];
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                const workbook = XLSX.read(buffer, { type: 'buffer' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                rows = XLSX.utils.sheet_to_json(firstSheet);
+            } else {
+                return NextResponse.json(
+                    { error: 'Unsupported file type' },
+                    { status: 400 }
+                );
+            }
+        } else {
+            return NextResponse.json(
+                { error: 'No data source provided' },
+                { status: 400 }
+            );
+        }
+
+        if (rows.length === 0) {
+            return NextResponse.json(
+                { error: 'Dataset is empty' },
+                { status: 400 }
+            );
+        }
+
+        // Analyze columns and generate recommendations
+        const columnMeta = analyzeColumns(rows);
+        const result = recommendCharts(rows, columnMeta, maxRecommendations);
+
+        return NextResponse.json({
+            success: true,
+            ...result,
+        });
+
+    } catch (error: any) {
+        console.error('Chart recommendation error:', error);
+        return NextResponse.json(
+            { error: 'Failed to generate recommendations: ' + error.message },
+            { status: 500 }
+        );
+    }
+}
