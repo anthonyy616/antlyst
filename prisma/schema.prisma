@@ -30,6 +30,7 @@ model User {
   dashboardShares DashboardShare[]
   dashboardComments DashboardComment[]
   activities   ActivityLog[]
+  alertRules   AlertRule[]
   
   // Phase C: Subscription & Payments
   subscription Subscription? 
@@ -223,6 +224,7 @@ model Project {
   analyses       Analysis[]
   posts          Post[]
   dataSources    DataSource[]
+  alertRules     AlertRule[]
 
   @@index([organizationId])
   @@index([ownerId])
@@ -449,6 +451,46 @@ model Reaction {
   @@index([postId])
   @@index([userId])
   @@map("reactions")
+}
+
+model AlertRule {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  metric       String   // column name or computed metric
+  condition    String   // "above", "below", "drops_by_pct", "increases_by_pct", "anomaly_detected"
+  threshold    Float
+  enabled      Boolean  @default(true)
+  lastChecked  DateTime?
+  lastStatus   String?  // "ok", "triggered", "error"
+  lastTriggered DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  AlertEvent   AlertEvent[]
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([enabled, lastChecked])
+  @@map("alert_rules")
+}
+
+model AlertEvent {
+  id          String    @id @default(cuid())
+  alertRuleId String
+  alertRule   AlertRule @relation(fields: [alertRuleId], references: [id], onDelete: Cascade)
+  status      String    // "triggered", "resolved"
+  message     String
+  value       Float?
+  threshold   Float?
+  createdAt   DateTime  @default(now())
+
+  @@index([alertRuleId])
+  @@index([createdAt(sort: Desc)])
+  @@map("alert_events")
 }
 
 model Job {
