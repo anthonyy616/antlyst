@@ -55,13 +55,15 @@ export default function DataProfilerPanel({ data, columns, projectId }: DataProf
     };
 
     const qualityScore = profile?.quality?.overallScore ?? 0;
+    const totalRows = profile?.totalRows ?? data.length;
+    const totalColumns = profile?.totalColumns ?? columns.length;
 
     return (
         <Card>
-            <CardHeader className="pb-2 px-4 pt-4">
+            <CardHeader className="pb-2 px-3 sm:px-4 pt-3 sm:pt-4">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-emerald-500" />
+                    <CardTitle className="text-xs sm:text-sm font-semibold flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-emerald-500 shrink-0" />
                         Data Quality Profile
                     </CardTitle>
                     {!fetched && (
@@ -78,7 +80,7 @@ export default function DataProfilerPanel({ data, columns, projectId }: DataProf
                     )}
                 </div>
             </CardHeader>
-            <CardContent className="px-4 pb-4">
+            <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4">
                 {loading && (
                     <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -94,7 +96,7 @@ export default function DataProfilerPanel({ data, columns, projectId }: DataProf
                     </p>
                 )}
                 {fetched && profile && (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                         {/* Quality Score */}
                         <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
                             <div className="flex items-center justify-between mb-2">
@@ -106,9 +108,9 @@ export default function DataProfilerPanel({ data, columns, projectId }: DataProf
                             <Progress value={qualityScore} className="h-2" />
                             {profile.quality?.summary && (
                                 <div className="flex gap-3 mt-2 text-[10px] text-muted-foreground">
-                                    <span>✅ {profile.quality.summary.passed} passed</span>
-                                    <span>⚠️ {profile.quality.summary.warnings} warnings</span>
-                                    <span>🚨 {profile.quality.summary.critical} critical</span>
+                                    <span>{profile.quality.summary.passed} passed</span>
+                                    <span>{profile.quality.summary.warnings} warnings</span>
+                                    <span>{profile.quality.summary.critical} critical</span>
                                 </div>
                             )}
                         </div>
@@ -116,19 +118,23 @@ export default function DataProfilerPanel({ data, columns, projectId }: DataProf
                         {/* Dataset Overview */}
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-2 text-center">
-                                <div className="text-lg font-bold">{profile.totalRows?.toLocaleString()}</div>
+                                <div className="text-base sm:text-lg font-bold">{totalRows.toLocaleString()}</div>
                                 <div className="text-[10px] text-muted-foreground">Rows</div>
                             </div>
                             <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-2 text-center">
-                                <div className="text-lg font-bold">{profile.totalColumns}</div>
+                                <div className="text-base sm:text-lg font-bold">{totalColumns}</div>
                                 <div className="text-[10px] text-muted-foreground">Columns</div>
                             </div>
                             <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-2 text-center">
-                                <div className="text-lg font-bold">{profile.columns?.filter((c: any) => c.detectedType === 'numeric').length}</div>
+                                <div className="text-base sm:text-lg font-bold">
+                                    {profile.columns?.filter((c: any) => c.detectedType === 'numeric').length ?? 0}
+                                </div>
                                 <div className="text-[10px] text-muted-foreground">Numeric</div>
                             </div>
                             <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-2 text-center">
-                                <div className="text-lg font-bold">{profile.columns?.filter((c: any) => c.detectedType === 'categorical').length}</div>
+                                <div className="text-base sm:text-lg font-bold">
+                                    {profile.columns?.filter((c: any) => c.detectedType === 'categorical').length ?? 0}
+                                </div>
                                 <div className="text-[10px] text-muted-foreground">Categorical</div>
                             </div>
                         </div>
@@ -141,7 +147,7 @@ export default function DataProfilerPanel({ data, columns, projectId }: DataProf
                             <ScrollArea className="max-h-[300px]">
                                 <div className="space-y-1.5">
                                     {profile.columns?.map((col: any) => (
-                                        <div key={col.name} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800 rounded px-3 py-1.5">
+                                        <div key={col.name} className="flex items-center justify-between text-xs bg-slate-50 dark:bg-slate-800 rounded px-3 py-1.5 gap-2">
                                             <div className="flex items-center gap-2 min-w-0">
                                                 <Badge variant="outline" className="text-[9px] shrink-0 capitalize">
                                                     {col.detectedType}
@@ -173,7 +179,7 @@ export default function DataProfilerPanel({ data, columns, projectId }: DataProf
                                             <div key={idx} className="flex items-start gap-2 text-xs p-2 bg-slate-50 dark:bg-slate-800 rounded">
                                                 <IssueIcon className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${SEVERITY_COLORS[issue.severity] || ''}`} />
                                                 <div className="min-w-0">
-                                                    <div className="flex items-center gap-1.5">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
                                                         <span className="font-medium">{issue.title}</span>
                                                         <Badge variant="outline" className={`text-[9px] ${SEVERITY_COLORS[issue.severity] || ''}`}>
                                                             {issue.severity}
@@ -181,7 +187,7 @@ export default function DataProfilerPanel({ data, columns, projectId }: DataProf
                                                     </div>
                                                     <p className="text-muted-foreground mt-0.5">{issue.description}</p>
                                                     {issue.suggestion && (
-                                                        <p className="text-muted-foreground mt-0.5 italic">💡 {issue.suggestion}</p>
+                                                        <p className="text-muted-foreground mt-0.5 italic">{issue.suggestion}</p>
                                                     )}
                                                 </div>
                                             </div>

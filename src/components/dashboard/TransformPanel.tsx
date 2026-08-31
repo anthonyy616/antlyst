@@ -117,15 +117,15 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
 
     return (
         <Card>
-            <CardHeader className="pb-2 px-4 pt-4">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                        <Wand2 className="w-4 h-4 text-amber-500" />
+            <CardHeader className="pb-2 px-3 sm:px-4 pt-3 sm:pt-4">
+                <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-xs sm:text-sm font-semibold flex items-center gap-2 shrink-0">
+                        <Wand2 className="w-4 h-4 text-amber-500 shrink-0" />
                         Data Transformations
                     </CardTitle>
                     <div className="flex items-center gap-1.5">
                         <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={addStep}>
-                            <Plus className="h-3 w-3" /> Add Step
+                            <Plus className="h-3 w-3" /> <span className="hidden sm:inline">Add Step</span><span className="sm:hidden">Add</span>
                         </Button>
                         {steps.length > 0 && (
                             <>
@@ -147,17 +147,17 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="px-4 pb-4">
+            <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4">
                 {error && (
                     <div className="text-sm text-red-500 py-2 mb-2 bg-red-50 dark:bg-red-950/20 rounded p-2">{error}</div>
                 )}
 
                 {result && (
                     <div className="text-xs text-muted-foreground bg-green-50 dark:bg-green-950/20 rounded p-2 mb-3 flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                        Pipeline executed — {result.transformedData?.length ?? 0} rows output
+                        <CheckCircle className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                        <span className="truncate">Pipeline executed — {result.transformedData?.length ?? 0} rows output</span>
                         {result.stepResults && (
-                            <span className="ml-auto">
+                            <span className="ml-auto shrink-0">
                                 {result.stepResults.filter((s: any) => s.status === 'completed').length}/{result.stepResults.length} steps succeeded
                             </span>
                         )}
@@ -172,15 +172,15 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
 
                 <div className="space-y-2">
                     {steps.map((step, idx) => (
-                        <div key={step.id} className="border rounded-lg p-3 space-y-2">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="text-[10px]">{idx + 1}</Badge>
+                        <div key={step.id} className="border rounded-lg p-2.5 sm:p-3 space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <Badge variant="outline" className="text-[10px] shrink-0">{idx + 1}</Badge>
                                     <Select
                                         value={step.type}
                                         onValueChange={(val) => updateStep(step.id, { type: val, config: {} })}
                                     >
-                                        <SelectTrigger className="h-7 text-xs w-[180px]">
+                                        <SelectTrigger className="h-7 text-xs w-[140px] sm:w-[180px]">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -192,7 +192,7 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 shrink-0">
                                     {step.status === 'completed' && <CheckCircle className="w-3.5 h-3.5 text-green-500" />}
                                     {step.status === 'failed' && <XCircle className="w-3.5 h-3.5 text-red-500" />}
                                     <Button
@@ -210,7 +210,7 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
                             <div className="flex flex-wrap gap-2">
                                 {/* Columns selector for most types */}
                                 {['remove_missing', 'remove_duplicates', 'select_columns', 'drop_columns', 'sort_rows'].includes(step.type) && (
-                                    <div className="flex-1 min-w-[150px]">
+                                    <div className="flex-1 min-w-[120px] sm:min-w-[150px]">
                                         <Label className="text-[10px] text-muted-foreground mb-0.5 block">Columns</Label>
                                         <Select
                                             value={step.config.columns?.[0] || ''}
@@ -230,7 +230,7 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
 
                                 {step.type === 'fill_missing' && (
                                     <>
-                                        <div className="flex-1 min-w-[120px]">
+                                        <div className="flex-1 min-w-[100px] sm:min-w-[120px]">
                                             <Label className="text-[10px] text-muted-foreground mb-0.5 block">Column</Label>
                                             <Select
                                                 value={step.config.columns?.[0] || ''}
@@ -246,7 +246,7 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                        <div className="flex-1 min-w-[120px]">
+                                        <div className="flex-1 min-w-[100px] sm:min-w-[120px]">
                                             <Label className="text-[10px] text-muted-foreground mb-0.5 block">Method</Label>
                                             <Select
                                                 value={step.config.method || 'value'}
@@ -263,7 +263,7 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
                                             </Select>
                                         </div>
                                         {step.config.method === 'value' && (
-                                            <div className="flex-1 min-w-[100px]">
+                                            <div className="flex-1 min-w-[80px] sm:min-w-[100px]">
                                                 <Label className="text-[10px] text-muted-foreground mb-0.5 block">Value</Label>
                                                 <Input
                                                     className="h-7 text-xs"
@@ -277,7 +277,7 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
                                 )}
 
                                 {step.type === 'sort_rows' && (
-                                    <div className="flex-1 min-w-[100px]">
+                                    <div className="flex-1 min-w-[80px] sm:min-w-[100px]">
                                         <Label className="text-[10px] text-muted-foreground mb-0.5 block">Direction</Label>
                                         <Select
                                             value={step.config.method || 'asc'}
@@ -297,7 +297,7 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
 
                                 {step.type === 'change_type' && (
                                     <>
-                                        <div className="flex-1 min-w-[120px]">
+                                        <div className="flex-1 min-w-[100px] sm:min-w-[120px]">
                                             <Label className="text-[10px] text-muted-foreground mb-0.5 block">Column</Label>
                                             <Select
                                                 value={step.config.column || ''}
@@ -313,7 +313,7 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                        <div className="flex-1 min-w-[100px]">
+                                        <div className="flex-1 min-w-[80px] sm:min-w-[100px]">
                                             <Label className="text-[10px] text-muted-foreground mb-0.5 block">Target Type</Label>
                                             <Select
                                                 value={step.config.targetType || 'string'}
@@ -334,7 +334,7 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
 
                                 {(step.type === 'aggregate' || step.type === 'group_by') && (
                                     <>
-                                        <div className="flex-1 min-w-[120px]">
+                                        <div className="flex-1 min-w-[100px] sm:min-w-[120px]">
                                             <Label className="text-[10px] text-muted-foreground mb-0.5 block">Group Column</Label>
                                             <Select
                                                 value={step.config.columns?.[0] || ''}
@@ -351,7 +351,7 @@ export default function TransformPanel({ data, columns, onTransformed }: Transfo
                                             </Select>
                                         </div>
                                         {step.type === 'aggregate' && (
-                                            <div className="flex-1 min-w-[100px]">
+                                            <div className="flex-1 min-w-[80px] sm:min-w-[100px]">
                                                 <Label className="text-[10px] text-muted-foreground mb-0.5 block">Function</Label>
                                                 <Select
                                                     value={step.config.method || 'sum'}

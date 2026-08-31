@@ -32,25 +32,25 @@ function DataAnalysisPanels({ analysisResult, projectId }: { analysisResult: any
         <div className="mt-4 sm:mt-6">
             <button
                 onClick={() => setShowPanels(!showPanels)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="w-full flex items-center justify-between px-3 sm:px-4 py-3 bg-white dark:bg-slate-900 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    🔬 Data Analysis & Insights
+                <span className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Data Analysis & Insights
                 </span>
                 {showPanels ? (
-                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" />
                 ) : (
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
                 )}
             </button>
 
             {showPanels && (
                 <div className="mt-3 space-y-4">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                         <DataInsightsPanel data={data} columns={columns} />
                         <ChartRecommendations data={data} columns={columns} projectId={projectId} />
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                         <DataProfilerPanel data={data} columns={columns} projectId={projectId} />
                         <TransformPanel data={data} columns={columns} />
                     </div>
@@ -137,7 +137,7 @@ export default function EngineWrapper({ analysisResult, projectId }: EngineWrapp
             </div>
 
             {/* Engine Content */}
-            <div id="dashboard-content" className="flex-1 p-0 sm:p-3 md:p-6 bg-gray-50 dark:bg-slate-950 min-w-0 w-full">
+            <div id="dashboard-content" className="flex-1 p-2 sm:p-3 md:p-6 bg-gray-50 dark:bg-slate-950 min-w-0 w-full overflow-hidden">
                 <Suspense fallback={<div className="flex items-center justify-center p-8 text-muted-foreground">Loading engine...</div>}>
                     {currentEngine === 'simple' && <SimpleEngine analysisResult={analysisResult} />}
                     {currentEngine === 'ml' && <MLPlotsEngine analysisResult={analysisResult} />}

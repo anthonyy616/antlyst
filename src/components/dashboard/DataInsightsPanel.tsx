@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -68,10 +68,10 @@ export default function DataInsightsPanel({ data, columns }: DataInsightsPanelPr
 
     return (
         <Card>
-            <CardHeader className="pb-2 px-4 pt-4">
+            <CardHeader className="pb-2 px-3 sm:px-4 pt-3 sm:pt-4">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-purple-500" />
+                    <CardTitle className="text-xs sm:text-sm font-semibold flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />
                         Automated Insights
                     </CardTitle>
                     {!fetched && (
@@ -88,7 +88,7 @@ export default function DataInsightsPanel({ data, columns }: DataInsightsPanelPr
                     )}
                 </div>
             </CardHeader>
-            <CardContent className="px-4 pb-4">
+            <CardContent className="px-3 sm:px-4 pb-3 sm:pb-4">
                 {loading && (
                     <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -107,7 +107,7 @@ export default function DataInsightsPanel({ data, columns }: DataInsightsPanelPr
                     <p className="text-xs text-muted-foreground py-4">No significant insights detected.</p>
                 )}
                 {fetched && insights.length > 0 && (
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                         {summary && (
                             <p className="text-xs text-muted-foreground bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
                                 {summary}
@@ -119,12 +119,12 @@ export default function DataInsightsPanel({ data, columns }: DataInsightsPanelPr
                             return (
                                 <div
                                     key={insight.id}
-                                    className="border rounded-lg p-3 space-y-2 hover:shadow-sm transition-shadow"
+                                    className="border rounded-lg p-2.5 sm:p-3 space-y-1.5 sm:space-y-2 hover:shadow-sm transition-shadow"
                                 >
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="flex items-center gap-2 min-w-0">
                                             <TypeIcon className="w-4 h-4 shrink-0 text-slate-500" />
-                                            <span className="text-sm font-medium truncate">{insight.title}</span>
+                                            <span className="text-xs sm:text-sm font-medium truncate">{insight.title}</span>
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             <Badge variant="outline" className={`text-[10px] ${sev.color}`}>
@@ -135,7 +135,7 @@ export default function DataInsightsPanel({ data, columns }: DataInsightsPanelPr
                                             </Badge>
                                         </div>
                                     </div>
-                                    <p className="text-xs text-slate-600 dark:text-slate-400">{insight.finding}</p>
+                                    <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">{insight.finding}</p>
                                     <p className="text-[10px] text-muted-foreground">{insight.evidence}</p>
                                     <div className="flex items-center gap-1.5 flex-wrap">
                                         {insight.relevantColumns.map((col) => (
