@@ -1,95 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
+import { getOrgMembers, updateMemberRole, removeMember, type OrgRole } from '@/lib/rbac';
 import { z } from 'zod';
 
 const updateRoleSchema = z.object({
-    organizationId: z.string(),
-    memberId: z.string(), // This is the userId of the member
-    newRole: z.enum(['admin', 'member']),
+    userId: z.string().min(1),
+    role: z.enum(['owner', 'admin', 'editor', 'viewer']),
 });
 
-const getMembersSchema = z.object({
-    organizationId: z.string(),
+const removeMemberSchema = z.object({
+    userId: z.string().min(1),
 });
 
 export async function GET(request: NextRequest) {
     try {
-        const { userId } = await auth();
-        if (!userId) {
+        const { userId, orgId } = await auth();
+        if (!userId || !orgId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { searchParams } = new URL(request.url);
-        const organizationId = searchParams.get('organizationId');
-
-        if (!organizationId) {
-            return NextResponse.json({ error: 'Org ID required' }, { status: 400 });
-        }
-
-        // 1. Verify Access
-        const membership = await prisma.orgMembership.findUnique({
-            where: { userId_organizationId: { userId, organizationId } }
-        });
-
-        if (!membership || !['owner', 'admin'].includes(membership.role)) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-        }
-
-        const page = parseInt(searchParams.get('page') || '1');
-        const limit = parseInt(searchParams.get('limit') || '50');
-        const skip = (page - 1) * limit;
-
-        // 2. Fetch Members with Pagination
-        const [members, total] = await prisma.$transaction([
-            prisma.orgMembership.findMany({
-                where: { organizationId },
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            name: true,
-                            email: true,
-                            imageUrl: true
-                        }
-                    }
-                },
-                orderBy: { role: 'asc' }, // owner, then member
-                skip,
-                take: limit
-            }),
-            prisma.orgMembership.count({ where: { organizationId } })
-        ]);
-
-        // 3. Format
-        const formattedMembers = members.map(m => ({
-            userId: m.userId,
-            name: m.user.name,
-            email: m.user.email,
-            imageUrl: m.user.imageUrl,
-            role: m.role,
-            joinedAt: m.createdAt
-        }));
-
-        return NextResponse.json({
-            members: formattedMembers,
-            pagination: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit)
-            }
-        });
-
+        const members = await getOrgMembers(orgId);
+        return NextResponse.json({ members });
     } catch (error: any) {
-        console.error("Fetch Members Error:", error);
-        return NextResponse.json({ error: 'Failed to fetch members' }, { status: 500 });
+        console.error('List members error:', error);
+        return NextResponse.json({ error: 'Failed to list members' }, { status: 500 });
     }
 }
+
 export async function PATCH(request: NextRequest) {
     try {
-        const { userId } = await auth();
-        if (!userId) {
+        const { userId, orgId } = await auth();
+        if (!userId || !orgId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -97,45 +39,45 @@ export async function PATCH(request: NextRequest) {
         const validation = updateRoleSchema.safeParse(body);
 
         if (!validation.success) {
-            return NextResponse.json({ error: 'Invalid input', details: validation.error }, { status: 400 });
+            return NextResponse.json(
+                { error: 'Invalid request', details: validation.error.issues },
+                { status: 400 }
+            );
         }
 
-        const { organizationId, memberId, newRole } = validation.data;
-
-        // 1. Verify Requester is Owner
-        const requesterMembership = await prisma.orgMembership.findUnique({
-            where: {
-                userId_organizationId: {
-                    userId,
-                    organizationId
-                }
-            }
-        });
-
-        if (!requesterMembership || requesterMembership.role !== 'owner') {
-            return NextResponse.json({ error: 'Only owners can manage roles' }, { status: 403 });
-        }
-
-        // 2. Prevent changing own role (Owner cannot demote themselves here, simple safety)
-        if (memberId === userId) {
-            return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 });
-        }
-
-        // 3. Update Target Member Role
-        await prisma.orgMembership.update({
-            where: {
-                userId_organizationId: {
-                    userId: memberId,
-                    organizationId
-                }
-            },
-            data: { role: newRole }
-        });
+        const { userId: targetUserId, role } = validation.data;
+        await updateMemberRole(orgId, targetUserId, role as OrgRole, userId);
 
         return NextResponse.json({ success: true });
-
     } catch (error: any) {
-        console.error("Update Role Error:", error);
-        return NextResponse.json({ error: 'Failed to update role' }, { status: 500 });
+        console.error('Update role error:', error);
+        return NextResponse.json({ error: error.message || 'Failed to update role' }, { status: 400 });
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const { userId, orgId } = await auth();
+        if (!userId || !orgId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const validation = removeMemberSchema.safeParse(body);
+
+        if (!validation.success) {
+            return NextResponse.json(
+                { error: 'Invalid request', details: validation.error.issues },
+                { status: 400 }
+            );
+        }
+
+        const { userId: targetUserId } = validation.data;
+        await removeMember(orgId, targetUserId, userId);
+
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        console.error('Remove member error:', error);
+        return NextResponse.json({ error: error.message || 'Failed to remove member' }, { status: 400 });
     }
 }
