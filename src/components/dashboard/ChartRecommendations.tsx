@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,7 +42,7 @@ function buildChartData(rec: ChartRecommendation, data: any[]) {
                 });
                 const sorted = Object.entries(grouped).sort((a, b) => b[1] - a[1]).slice(0, 15);
                 return {
-                    data: [{ type: 'bar', x: sorted.map(s => s[0]), y: sorted.map(s => s[1]), marker: { color: '#6366f1' } }],
+                    data: [{ type: 'bar', x: sorted.map(s => s[0]), y: sorted.map(s => s[1]), marker: { color: '#6366f1' } }] as any[],
                     layout: { margin: { t: 8, b: 40, l: 40, r: 8 }, height: 200, font: { size: 10 } },
                 };
             }
@@ -54,7 +54,7 @@ function buildChartData(rec: ChartRecommendation, data: any[]) {
                 });
                 const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8);
                 return {
-                    data: [{ type: 'pie', labels: sorted.map(s => s[0]), values: sorted.map(s => s[1]), hole: 0.4, textinfo: 'label+percent', textposition: 'outside' }],
+                    data: [{ type: 'pie', labels: sorted.map(s => s[0]), values: sorted.map(s => s[1]), hole: 0.4, textinfo: 'label+percent', textposition: 'outside' }] as any[],
                     layout: { margin: { t: 8, b: 8, l: 8, r: 8 }, height: 200, showlegend: false, font: { size: 10 } },
                 };
             }
@@ -68,7 +68,7 @@ function buildChartData(rec: ChartRecommendation, data: any[]) {
                     if (!isNaN(x) && !isNaN(y)) { xVals.push(x); yVals.push(y); }
                 });
                 return {
-                    data: [{ type: 'scatter', mode: 'markers', x: xVals, y: yVals, marker: { size: 4, color: '#8b5cf6', opacity: 0.6 } }],
+                    data: [{ type: 'scatter', mode: 'markers', x: xVals, y: yVals, marker: { size: 4, color: '#8b5cf6', opacity: 0.6 } }] as any[],
                     layout: { margin: { t: 8, b: 40, l: 40, r: 8 }, height: 200, font: { size: 10 } },
                 };
             }
@@ -83,21 +83,21 @@ function buildChartData(rec: ChartRecommendation, data: any[]) {
                     if (x && !isNaN(y)) { xVals.push(x); yVals.push(y); }
                 });
                 return {
-                    data: [{ type: rec.chartType === 'area' ? 'scatter' : 'scatter', mode: 'lines', x: xVals, y: yVals, fill: rec.chartType === 'area' ? 'tozeroy' : undefined, line: { color: '#06b6d4', width: 2 } }],
+                    data: [{ type: 'scatter', mode: 'lines', x: xVals, y: yVals, fill: rec.chartType === 'area' ? 'tozeroy' : undefined, line: { color: '#06b6d4', width: 2 } }] as any[],
                     layout: { margin: { t: 8, b: 40, l: 40, r: 8 }, height: 200, font: { size: 10 } },
                 };
             }
             case 'histogram': {
                 const vals = data.map(row => Number(row[rec.xColumn!])).filter(v => !isNaN(v));
                 return {
-                    data: [{ type: 'histogram', x: vals, marker: { color: '#f59e0b' }, nbinsx: 20 }],
+                    data: [{ type: 'histogram', x: vals, marker: { color: '#f59e0b' }, nbinsx: 20 }] as any[],
                     layout: { margin: { t: 8, b: 40, l: 40, r: 8 }, height: 200, font: { size: 10 } },
                 };
             }
             case 'box': {
                 const vals = data.map(row => Number(row[rec.xColumn!])).filter(v => !isNaN(v));
                 return {
-                    data: [{ type: 'box', y: vals, marker: { color: '#ec4899' }, boxpoints: 'outliers' }],
+                    data: [{ type: 'box', y: vals, marker: { color: '#ec4899' }, boxpoints: 'outliers' }] as any[],
                     layout: { margin: { t: 8, b: 8, l: 40, r: 8 }, height: 200, font: { size: 10 } },
                 };
             }
@@ -107,6 +107,84 @@ function buildChartData(rec: ChartRecommendation, data: any[]) {
     } catch {
         return null;
     }
+}
+
+// Extracted card component to avoid hooks-in-loop violation
+function RecommendationCard({ rec, data, onApply, isExpanded, onToggle }: {
+    rec: ChartRecommendation;
+    data: any[];
+    onApply?: (rec: ChartRecommendation) => void;
+    isExpanded: boolean;
+    onToggle: () => void;
+}) {
+    const chartData = useMemo(() => {
+        if (isExpanded) return buildChartData(rec, data);
+        return null;
+    }, [isExpanded, rec, data]);
+
+    return (
+        <div className="border rounded-lg overflow-hidden">
+            <div
+                className="p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                onClick={onToggle}
+            >
+                <div className="flex items-start justify-between gap-2 mb-1.5">
+                    <span className="text-xs sm:text-sm font-medium truncate">{rec.title}</span>
+                    <Badge variant="outline" className="text-[10px] shrink-0 capitalize">
+                        {rec.chartType}
+                    </Badge>
+                </div>
+                <p className="text-[11px] text-muted-foreground mb-2 line-clamp-2">{rec.description}</p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                    <Badge variant="secondary" className="text-[10px]">
+                        {rec.category}
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px]">
+                        {Math.round(rec.confidence * 100)}% match
+                    </Badge>
+                    {rec.xColumn && (
+                        <Badge variant="outline" className="text-[10px] font-mono">
+                            {rec.xColumn}{rec.yColumn ? ` x ${rec.yColumn}` : ''}
+                        </Badge>
+                    )}
+                </div>
+            </div>
+            {isExpanded && (
+                <div className="border-t bg-slate-50 dark:bg-slate-900 p-3">
+                    {chartData ? (
+                        <MiniPlot
+                            data={chartData.data}
+                            layout={{ ...chartData.layout, autosize: true }}
+                            config={{ displayModeBar: false, responsive: true }}
+                            style={{ width: '100%', height: 200 }}
+                        />
+                    ) : (
+                        <div className="h-[120px] flex items-center justify-center text-xs text-muted-foreground">
+                            Preview not available for this chart type
+                        </div>
+                    )}
+                    <div className="flex gap-2 mt-2">
+                        <Button
+                            variant="default"
+                            size="sm"
+                            className="h-7 text-xs flex-1"
+                            onClick={(e) => { e.stopPropagation(); onApply?.(rec); }}
+                        >
+                            Apply This Chart
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={(e) => { e.stopPropagation(); onToggle(); }}
+                        >
+                            <X className="h-3 w-3" />
+                        </Button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 }
 
 export default function ChartRecommendations({ data, columns, projectId, onApply }: ChartRecommendationsProps) {
@@ -186,77 +264,16 @@ export default function ChartRecommendations({ data, columns, projectId, onApply
                             </p>
                         )}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {recommendations.map((rec) => {
-                                const isExpanded = expandedId === rec.id;
-                                const chartData = useMemo(() => {
-                                    if (isExpanded) return buildChartData(rec, data);
-                                    return null;
-                                }, [isExpanded, rec, data]);
-
-                                return (
-                                    <div key={rec.id} className="border rounded-lg overflow-hidden">
-                                        <div
-                                            className="p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                                            onClick={() => setExpandedId(isExpanded ? null : rec.id)}
-                                        >
-                                            <div className="flex items-start justify-between gap-2 mb-1.5">
-                                                <span className="text-xs sm:text-sm font-medium truncate">{rec.title}</span>
-                                                <Badge variant="outline" className="text-[10px] shrink-0 capitalize">
-                                                    {rec.chartType}
-                                                </Badge>
-                                            </div>
-                                            <p className="text-[11px] text-muted-foreground mb-2 line-clamp-2">{rec.description}</p>
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                <Badge variant="secondary" className="text-[10px]">
-                                                    {rec.category}
-                                                </Badge>
-                                                <Badge variant="outline" className="text-[10px]">
-                                                    {Math.round(rec.confidence * 100)}% match
-                                                </Badge>
-                                                {rec.xColumn && (
-                                                    <Badge variant="outline" className="text-[10px] font-mono">
-                                                        {rec.xColumn}{rec.yColumn ? ` x ${rec.yColumn}` : ''}
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </div>
-                                        {isExpanded && (
-                                            <div className="border-t bg-slate-50 dark:bg-slate-900 p-3">
-                                                {chartData ? (
-                                                    <MiniPlot
-                                                        data={chartData.data}
-                                                        layout={{ ...chartData.layout, autosize: true }}
-                                                        config={{ displayModeBar: false, responsive: true }}
-                                                        style={{ width: '100%', height: 200 }}
-                                                    />
-                                                ) : (
-                                                    <div className="h-[120px] flex items-center justify-center text-xs text-muted-foreground">
-                                                        Preview not available for this chart type
-                                                    </div>
-                                                )}
-                                                <div className="flex gap-2 mt-2">
-                                                    <Button
-                                                        variant="default"
-                                                        size="sm"
-                                                        className="h-7 text-xs flex-1"
-                                                        onClick={(e) => { e.stopPropagation(); onApply?.(rec); }}
-                                                    >
-                                                        Apply This Chart
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-7 text-xs"
-                                                        onClick={(e) => { e.stopPropagation(); setExpandedId(null); }}
-                                                    >
-                                                        <X className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
+                            {recommendations.map((rec) => (
+                                <RecommendationCard
+                                    key={rec.id}
+                                    rec={rec}
+                                    data={data}
+                                    onApply={onApply}
+                                    isExpanded={expandedId === rec.id}
+                                    onToggle={() => setExpandedId(expandedId === rec.id ? null : rec.id)}
+                                />
+                            ))}
                         </div>
                     </div>
                 )}
