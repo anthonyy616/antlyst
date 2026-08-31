@@ -6,12 +6,61 @@ import { Button } from '@/components/ui/button';
 import { ExportButton } from './ExportButton';
 import { TemplateGallery } from './TemplateGallery';
 import { DataConnector } from './DataConnector';
-import { BarChart3, BrainCircuit, LayoutGrid, LayoutTemplate, Plug } from 'lucide-react';
+import { BarChart3, BrainCircuit, LayoutGrid, LayoutTemplate, Plug, ChevronDown, ChevronUp } from 'lucide-react';
 
 // Dynamic imports — only load the engine the user picks
 const SimpleEngine = dynamic(() => import('./simple-engine'), { ssr: false });
 const MLPlotsEngine = dynamic(() => import('./MLPlotsEngine'), { ssr: false });
 const PowerBIEngine = dynamic(() => import('./PowerBIEngine'), { ssr: false });
+
+// Lazy-load analysis panels
+const DataInsightsPanel = dynamic(() => import('./DataInsightsPanel'), { ssr: false });
+const ChartRecommendations = dynamic(() => import('./ChartRecommendations'), { ssr: false });
+const DataProfilerPanel = dynamic(() => import('./DataProfilerPanel'), { ssr: false });
+const TransformPanel = dynamic(() => import('./TransformPanel'), { ssr: false });
+
+// ── Data Analysis Panels (collapsible below engine) ──────────────────
+
+function DataAnalysisPanels({ analysisResult, projectId }: { analysisResult: any; projectId?: string }) {
+    const [showPanels, setShowPanels] = useState(false);
+    const data = analysisResult?.stats?.preview || [];
+    const columns = analysisResult?.stats?.columns || [];
+
+    if (data.length === 0) return null;
+
+    return (
+        <div className="mt-4 sm:mt-6">
+            <button
+                onClick={() => setShowPanels(!showPanels)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            >
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    🔬 Data Analysis & Insights
+                </span>
+                {showPanels ? (
+                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                )}
+            </button>
+
+            {showPanels && (
+                <div className="mt-3 space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <DataInsightsPanel data={data} columns={columns} />
+                        <ChartRecommendations data={data} columns={columns} projectId={projectId} />
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <DataProfilerPanel data={data} columns={columns} projectId={projectId} />
+                        <TransformPanel data={data} columns={columns} />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── Engine Wrapper ───────────────────────────────────────────────────
 
 interface EngineWrapperProps {
     analysisResult: any;
@@ -94,6 +143,9 @@ export default function EngineWrapper({ analysisResult, projectId }: EngineWrapp
                     {currentEngine === 'ml' && <MLPlotsEngine analysisResult={analysisResult} />}
                     {currentEngine === 'powerbi' && <PowerBIEngine analysisResult={analysisResult} />}
                 </Suspense>
+
+                {/* Data Analysis Panels */}
+                <DataAnalysisPanels analysisResult={analysisResult} projectId={projectId} />
             </div>
 
             {/* Template Gallery Dialog */}
