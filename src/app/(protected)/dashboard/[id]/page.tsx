@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import EngineWrapper from "@/components/dashboard/engine-wrapper";
 import FileUploader from "@/components/upload/file-uploader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardTools } from "@/components/dashboard/DashboardTools";
 
 interface DashboardPageProps {
     params: Promise<{ id: string }>;
@@ -69,12 +70,15 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
                             <EngineWrapper analysisResult={analysisResult} projectId={project.id} />
                         )}
 
-                        {/* 
-                        <div className="mt-8 pt-8 border-t">
-                            <h3 className="text-lg font-semibold mb-4">Update Data</h3>
-                            <FileUploader projectId={project.id} />
-                        </div>
-                        */}
+                        {/* Analysis Tools */}
+                        <DashboardTools
+                            projectId={project.id}
+                            orgId={project.organizationId}
+                            data={analysisResult?.stats?.preview || []}
+                            columns={analysisResult?.stats?.columns || []}
+                            datasetName={project.name}
+                            stats={analysisResult?.stats}
+                        />
                     </>
                 )}
             </main>
