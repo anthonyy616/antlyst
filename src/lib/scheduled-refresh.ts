@@ -127,7 +127,7 @@ export async function recordDatasetVersion(
             rowCount,
             columnCount,
             schema,
-            changeSummary,
+            changeSummary: changeSummary || undefined,
         },
     });
 
@@ -172,32 +172,11 @@ export async function executeRefresh(dataSourceId: string): Promise<{
         });
 
         // Trigger the background fetch (reuse existing infrastructure)
-        const { backgroundFetch } = await import('./background-fetch');
-        const result = await backgroundFetch(dataSourceId);
+        const { fetchDataInBackground } = await import('./background-fetch');
+        const result = await fetchDataInBackground(dataSourceId, dataSource.type, (dataSource.config as Record<string, string>) || {});
 
         // Determine status
-        let status: 'success' | 'failed' | 'schema_changed' = 'success';
-
-        // Record version if we have a file
-        if (result?.fileId) {
-            const file = await prisma.file.findUnique({ where: { id: result.fileId } });
-            if (file) {
-                const stats = (await prisma.analysisResult.findUnique({ where: { fileId: result.fileId } }))?.stats as any;
-                if (stats?.schema) {
-                    const versionResult = await recordDatasetVersion(
-                        dataSourceId,
-                        result.fileId,
-                        stats.rowCount || 0,
-                        stats.columns?.length || 0,
-                        stats.schema,
-                        previousSchema
-                    );
-                    if (versionResult.schemaChanged) {
-                        status = 'schema_changed';
-                    }
-                }
-            }
-        }
+        let status: 'success' | 'failed' | 'schema_changed' = result.success ? 'success' : 'failed';
 
         // Update data source
         const nextRefreshAt = dataSource.refreshSchedule

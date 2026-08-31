@@ -46,7 +46,7 @@ export function AutoMLPanel({ data, columns }: AutoMLPanelProps) {
 
     const importancePlotData = useMemo(() => {
         if (!result?.bestModel?.featureImportance) return null;
-        const sorted = Object.entries(result.bestModel.featureImportance)
+        const sorted = Object.entries(result.bestModel.featureImportance as Record<string, number>)
             .sort(([, a], [, b]) => b - a)
             .slice(0, 10);
         return [{

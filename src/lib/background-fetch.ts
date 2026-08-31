@@ -112,11 +112,13 @@ export async function fetchDataInBackground(
         });
 
         // Create default dashboard
+        const dsOwner = await prisma.dataSource.findUnique({ where: { id: dataSourceId }, select: { project: { select: { ownerId: true } } } });
         await prisma.dashboard.create({
             data: {
                 projectId: dataSource.projectId,
                 style: 'powerbi',
                 config: {},
+                ownerId: dsOwner?.project?.ownerId || '',
             },
         });
 

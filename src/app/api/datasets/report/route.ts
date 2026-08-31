@@ -7,8 +7,8 @@ const reportSchema = z.object({
     stats: z.object({
         rowCount: z.number(),
         columns: z.array(z.string()),
-        preview: z.array(z.record(z.any())),
-        columnMeta: z.record(z.any()).optional(),
+        preview: z.array(z.record(z.string(), z.any())),
+        columnMeta: z.record(z.string(), z.any()).optional(),
     }),
     insights: z.array(z.any()).optional(),
     profile: z.any().optional(),
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         const report = generateReport(input);
 
         switch (format) {
-            case 'html':
+            case 'html': {
                 const html = generateHTML(report);
                 return new NextResponse(html, {
                     headers: {
@@ -44,8 +44,9 @@ export async function POST(request: NextRequest) {
                         'Content-Disposition': `attachment; filename="report-${Date.now()}.html"`,
                     },
                 });
+            }
 
-            case 'text':
+            case 'text': {
                 const text = generateText(report);
                 return new NextResponse(text, {
                     headers: {
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
                         'Content-Disposition': `attachment; filename="report-${Date.now()}.txt"`,
                     },
                 });
+            }
 
             case 'json':
             default:

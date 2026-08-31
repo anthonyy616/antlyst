@@ -295,7 +295,7 @@ function generateMLSummary(input: ReportInput): ReportSection {
     if (result.bestModel?.featureImportance) {
         lines.push('');
         lines.push('Feature importance (best model):');
-        const sorted = Object.entries(result.bestModel.featureImportance)
+        const sorted = Object.entries(result.bestModel.featureImportance as Record<string, number>)
             .sort(([, a], [, b]) => b - a)
             .slice(0, 10);
         for (const [feature, importance] of sorted) {

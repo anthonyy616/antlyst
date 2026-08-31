@@ -31,14 +31,12 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
 
     if (!project) notFound();
 
-    // Check if user has access (simple check)
-    if (project.ownerId !== userId) {
-        // In a real app, check org access too
-        // return <div>Unauthorized</div>;
-    }
-
     const latestFile = project.files[0];
-    const analysisResult = latestFile?.analysisResult;
+    const analysisResult = latestFile?.analysisResult as any;
+
+    const stats = analysisResult?.stats as any;
+    const previewData = Array.isArray(stats?.preview) ? stats.preview : [];
+    const columnsList = Array.isArray(stats?.columns) ? stats.columns : [];
 
     return (
         <div className="min-h-screen bg-gray-50 overflow-x-hidden">
@@ -74,10 +72,10 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
                         <DashboardTools
                             projectId={project.id}
                             orgId={project.organizationId}
-                            data={analysisResult?.stats?.preview || []}
-                            columns={analysisResult?.stats?.columns || []}
+                            data={previewData}
+                            columns={columnsList}
                             datasetName={project.name}
-                            stats={analysisResult?.stats}
+                            stats={stats}
                         />
                     </>
                 )}

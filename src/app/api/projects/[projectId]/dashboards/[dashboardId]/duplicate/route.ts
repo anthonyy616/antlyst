@@ -28,9 +28,9 @@ export async function POST(
                 name: `${original.name} (Copy)`,
                 description: original.description,
                 style: original.style,
-                config: original.config,
-                layout: original.layout,
-                filterConfig: original.filterConfig,
+                config: original.config as any,
+                layout: original.layout as any,
+                filterConfig: original.filterConfig as any,
                 ownerId: userId,
             },
         });
