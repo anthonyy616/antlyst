@@ -1,14 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
-import SimpleEngine from './simple-engine';
-import MLPlotsEngine from './MLPlotsEngine';
-import PowerBIEngine from './PowerBIEngine';
 import { ExportButton } from './ExportButton';
 import { TemplateGallery } from './TemplateGallery';
 import { DataConnector } from './DataConnector';
 import { BarChart3, BrainCircuit, LayoutGrid, LayoutTemplate, Plug } from 'lucide-react';
+
+// Dynamic imports — only load the engine the user picks
+const SimpleEngine = dynamic(() => import('./simple-engine'), { ssr: false });
+const MLPlotsEngine = dynamic(() => import('./MLPlotsEngine'), { ssr: false });
+const PowerBIEngine = dynamic(() => import('./PowerBIEngine'), { ssr: false });
 
 interface EngineWrapperProps {
     analysisResult: any;
@@ -86,9 +89,11 @@ export default function EngineWrapper({ analysisResult, projectId }: EngineWrapp
 
             {/* Engine Content */}
             <div id="dashboard-content" className="flex-1 p-0 sm:p-3 md:p-6 bg-gray-50 dark:bg-slate-950 min-w-0 w-full">
-                {currentEngine === 'simple' && <SimpleEngine analysisResult={analysisResult} />}
-                {currentEngine === 'ml' && <MLPlotsEngine analysisResult={analysisResult} />}
-                {currentEngine === 'powerbi' && <PowerBIEngine analysisResult={analysisResult} />}
+                <Suspense fallback={<div className="flex items-center justify-center p-8 text-muted-foreground">Loading engine...</div>}>
+                    {currentEngine === 'simple' && <SimpleEngine analysisResult={analysisResult} />}
+                    {currentEngine === 'ml' && <MLPlotsEngine analysisResult={analysisResult} />}
+                    {currentEngine === 'powerbi' && <PowerBIEngine analysisResult={analysisResult} />}
+                </Suspense>
             </div>
 
             {/* Template Gallery Dialog */}

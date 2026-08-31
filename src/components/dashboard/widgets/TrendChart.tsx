@@ -3,8 +3,8 @@
 import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
 
-// Dynamic import for Plotly
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+// Dynamic import for Plotly (lightweight bundle)
+const Plot = dynamic(() => import('../PlotWrapper'), { ssr: false });
 
 interface TrendChartProps {
     title: string;

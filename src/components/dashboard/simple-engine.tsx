@@ -12,8 +12,8 @@ import { Label } from "@/components/ui/label";
 import { ColumnTypeBadge } from "./widgets/ColumnComponents";
 import { ColumnMeta } from "@/lib/column-validator";
 
-// Dynamically import Plotly
-const Plot = dynamic(() => import('react-plotly.js'), {
+// Dynamically import Plotly (lightweight bundle)
+const Plot = dynamic(() => import('./PlotWrapper'), {
     ssr: false,
     loading: () => <div className="h-full w-full flex items-center justify-center text-muted-foreground text-sm">Loading charts...</div>
 });

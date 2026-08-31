@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2 } from 'lucide-react';
 import { ColumnMeta } from '@/lib/column-validator';
 
-// Dynamically import Plotly to avoid SSR issues
-const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
+// Dynamically import Plotly (lightweight bundle)
+const Plot = dynamic(() => import('./PlotWrapper'), { ssr: false });
 
 interface MLPlotsEngineProps {
     analysisResult?: any;
