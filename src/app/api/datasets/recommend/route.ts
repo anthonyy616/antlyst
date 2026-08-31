@@ -39,7 +39,7 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
 export async function POST(req: NextRequest) {
     try {
         const { userId, orgId } = await auth();
-        if (!userId || !orgId) {
+        if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -60,6 +60,11 @@ export async function POST(req: NextRequest) {
         if (inlineData && inlineData.length > 0) {
             rows = inlineData;
         } else if (fileId) {
+            // R2 file access requires orgId
+            if (!orgId) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+
             const fileRecord = await prisma.file.findUnique({ where: { id: fileId } });
             if (!fileRecord) {
                 return NextResponse.json({ error: 'File not found' }, { status: 404 });

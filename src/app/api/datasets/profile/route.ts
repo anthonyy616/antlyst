@@ -38,7 +38,7 @@ async function streamToBuffer(stream: Readable): Promise<Buffer> {
 export async function POST(req: NextRequest) {
     try {
         const { userId, orgId } = await auth();
-        if (!userId || !orgId) {
+        if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -58,9 +58,14 @@ export async function POST(req: NextRequest) {
         let name = datasetName || 'Untitled Dataset';
 
         if (inlineData && inlineData.length > 0) {
-            // Use inline data directly
+            // Use inline data directly — no orgId needed
             rows = inlineData;
         } else if (fileId) {
+            // R2 file access requires orgId
+            if (!orgId) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+
             // Fetch file from R2 and parse
             const fileRecord = await prisma.file.findUnique({ where: { id: fileId } });
             if (!fileRecord) {
