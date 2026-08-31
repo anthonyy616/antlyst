@@ -1,9 +1,14 @@
 'use client';
 
-import { UserButton } from '@clerk/nextjs';
+import dynamic from 'next/dynamic';
 import { ModeToggle } from '@/components/mode-toggle';
 import { NotificationsDropdown } from '@/components/NotificationsDropdown';
 import { MobileSidebar } from '@/components/Sidebar';
+
+const UserButton = dynamic(
+    () => import('@clerk/nextjs').then((mod) => mod.UserButton),
+    { ssr: false }
+);
 
 export function ProtectedHeader() {
     return (
