@@ -358,21 +358,48 @@ model DataSource {
 
   name         String
   type         String   // "upload", "url", "api", "google-sheets", "s3"
-  config       Json?    // Store connection-specific config (URL, headers, etc.)
+  config       Json?
   status       String   @default("pending") // pending, fetching, processing, ready, error
   lastSyncAt   DateTime?
   errorMessage String?
 
+  // Refresh scheduling
+  refreshSchedule String?  // null, "manual", "hourly", "daily", "weekly", "monthly"
+  nextRefreshAt   DateTime?
+  refreshCount    Int      @default(0)
+  lastRefreshStatus String? // success, failed, schema_changed
+  lastRefreshError  String?
+
   // Linked file (the fetched/uploaded data)
   fileId       String?
   file         File?    @relation(fields: [fileId], references: [id])
+
+  versions     DatasetVersion[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@index([projectId])
   @@index([status])
+  @@index([nextRefreshAt])
   @@map("data_sources")
+}
+
+model DatasetVersion {
+  id           String   @id @default(cuid())
+  dataSourceId String
+  dataSource   DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  version      Int
+  fileId       String?
+  rowCount     Int
+  columnCount  Int
+  schema       Json?
+  changeSummary Json?
+  createdAt    DateTime @default(now())
+
+  @@unique([dataSourceId, version])
+  @@index([dataSourceId])
+  @@map("dataset_versions")
 }
 
 model Post {
