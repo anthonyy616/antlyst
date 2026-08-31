@@ -164,7 +164,7 @@ function PowerBIEngineInner({ analysisResult }: PowerBIEngineProps) {
     }, [analysisResult, stats]);
 
     const generatedKPIs = useMemo(() => {
-        if (providedKpis && providedKPIs.length > 0) return providedKPIs;
+        if (providedKpis && providedKpis.length > 0) return providedKpis;
         return generateKPIsFromStats(stats);
     }, [providedKpis, stats]);
 
