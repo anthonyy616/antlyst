@@ -7,7 +7,8 @@
 import { prisma } from '@/lib/prisma';
 import { r2Client, R2_BUCKET_NAME } from '@/lib/r2';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { fetchFromUrl, fetchFromAPI, fetchFromGoogleSheets, fetchFromS3, FetchResult } from '@/lib/data-fetchers';
+import { fetchFromUrl, fetchFromAPI, fetchFromGoogleSheets, fetchFromS3 } from '@/lib/data-fetchers';
+import { DataSourceResult } from '@/lib/data-source-contract';
 import { analyzeColumns } from '@/lib/column-validator';
 
 export interface BackgroundFetchResult {
@@ -25,7 +26,7 @@ export async function fetchDataInBackground(
     if (!dataSource) return { success: false, error: 'Data source not found' };
 
     try {
-        let result: FetchResult;
+        let result: DataSourceResult;
 
         switch (type) {
             case 'url':
@@ -54,11 +55,12 @@ export async function fetchDataInBackground(
         }
 
         if (!result.success || !result.data || !result.rawBuffer) {
+            const errorMsg = result.error?.message || 'Unknown fetch error';
             await prisma.dataSource.update({
                 where: { id: dataSourceId },
-                data: { status: 'error', errorMessage: result.error },
+                data: { status: 'error', errorMessage: errorMsg },
             });
-            return { success: false, error: result.error };
+            return { success: false, error: errorMsg };
         }
 
         // Upload to R2
