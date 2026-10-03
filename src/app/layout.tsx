@@ -14,7 +14,7 @@ export const metadata: Metadata = {
         default: "Antlyst - Data Dashboards in Seconds",
         template: "%s | Antlyst"
     },
-    description: "Antlyst turns your raw data into stunning, interactive dashboards in seconds. Supported formats: CSV, Excel, PDF.",
+    description: "Antlyst turns raw files and data sources into interactive dashboards, AI-assisted analysis, forecasts, alerts, reports, and collaborative team workspaces.",
     keywords: ["data visualization", "dashboard", "analytics", "csv to dashboard", "excel to dashboard", "ai data analysis"],
     authors: [{ name: "Antigravity Team" }],
     creator: "Antigravity",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
         locale: "en_US",
         url: "https://antlyst.com",
         title: "Antlyst - Data Dashboards in Seconds",
-        description: "Turn your raw data into stunning, interactive dashboards in seconds.",
+        description: "Turn raw data into interactive dashboards, AI-assisted analysis, forecasts, alerts, and collaborative workspaces.",
         siteName: "Antlyst",
         images: [
             {
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     twitter: {
         card: "summary_large_image",
         title: "Antlyst - Data Dashboards in Seconds",
-        description: "Turn your raw data into stunning, interactive dashboards in seconds.",
+        description: "Turn raw data into interactive dashboards, AI-assisted analysis, forecasts, alerts, and collaborative workspaces.",
         images: ["/og-image.png"],
         creator: "@antlyst",
     },

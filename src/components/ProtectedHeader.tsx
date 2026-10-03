@@ -12,10 +12,10 @@ const UserButton = dynamic(
 
 export function ProtectedHeader() {
     return (
-        <header className="flex items-center p-4 border-b gap-4">
+        <header className="flex items-center p-3 sm:p-4 border-b gap-2 sm:gap-4">
             <MobileSidebar />
             <div className="flex w-full justify-end">
-                <nav className="flex items-center gap-2">
+                <nav className="flex items-center gap-1 sm:gap-2">
                     <NotificationsDropdown />
                     <ModeToggle />
                     <UserButton afterSignOutUrl="/" />

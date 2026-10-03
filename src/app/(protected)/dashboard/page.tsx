@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
+import { requireOrg } from "@/lib/auth";
 
-export default function DashboardPage() {
-    // Redirect to projects for now, or show a summary
-    redirect("/projects");
+export default async function DashboardPage() {
+    const { orgId } = await requireOrg();
+    redirect(`/${orgId}/projects`);
 }

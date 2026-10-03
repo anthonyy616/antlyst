@@ -23,7 +23,7 @@ export default async function DashboardLayout({
             </Link>
             <div className="h-6 w-px bg-slate-200" />
             <OrganizationSwitcher
-              afterCreateOrganizationUrl="/onboarding"
+              afterCreateOrganizationUrl="/:id/projects"
               afterLeaveOrganizationUrl="/onboarding"
               afterSelectOrganizationUrl="/:id/projects"
             />

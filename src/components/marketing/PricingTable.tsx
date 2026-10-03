@@ -69,7 +69,7 @@ export function PricingTable() {
 
     return (
         <section className="py-24 bg-slate-50 dark:bg-slate-900 relative z-10" id="pricing">
-            <div className="container mx-auto px-4">
+            <div className="container mx-auto w-full px-4">
                 <div className="text-center max-w-3xl mx-auto mb-16">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4 text-slate-900 dark:text-white">
                         Simple, Transparent Pricing
@@ -83,7 +83,7 @@ export function PricingTable() {
                     {plans.map((plan) => (
                         <div
                             key={plan.name}
-                            className={`relative rounded-2xl bg-white dark:bg-slate-800 p-8 shadow-lg ring-1 ring-slate-200 dark:ring-slate-700 flex flex-col ${plan.popular ? 'ring-2 ring-brand-purple scale-105 z-10' : ''}`}
+                            className={`relative rounded-2xl bg-white dark:bg-slate-800 p-6 sm:p-8 shadow-lg ring-1 ring-slate-200 dark:ring-slate-700 flex flex-col ${plan.popular ? 'ring-2 ring-brand-purple md:scale-105 z-10' : ''}`}
                         >
                             {plan.popular && (
                                 <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4">

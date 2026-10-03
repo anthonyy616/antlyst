@@ -12,7 +12,7 @@ export default function PricingPage() {
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
             <LandingHeader />
 
-            <main className="flex-1 pt-24 pb-12">
+            <main className="flex-1 pt-12 sm:pt-24 pb-12">
                 <div className="container mx-auto px-4 mb-2">
                     <h1 className="sr-only">Pricing Plans</h1>
                 </div>
@@ -28,7 +28,7 @@ export default function PricingPage() {
 
             <footer className="border-t py-12 bg-white dark:bg-slate-900">
                 <div className="container mx-auto px-4 text-center text-muted-foreground">
-                    <p>© 2025 Antlyst. All rights reserved.</p>
+                    <p>© 2026 Antlyst. All rights reserved.</p>
                 </div>
             </footer>
         </div>

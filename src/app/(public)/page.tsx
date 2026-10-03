@@ -7,14 +7,14 @@ export const revalidate = 3600;
 
 export default function Home() {
     return (
-        <div className="min-h-screen bg-transparent flex flex-col overflow-hidden relative">
+        <div className="min-h-screen bg-transparent flex flex-col overflow-x-hidden relative">
             {/* Header */}
             <LandingHeader />
 
 
 
             {/* Hero Section */}
-            <main className="flex-1 container mx-auto px-4 pt-20 pb-32 relative z-10">
+            <main className="flex-1 container mx-auto w-full px-4 pt-12 sm:pt-20 pb-20 sm:pb-32 relative z-10">
                 <LandingHero />
                 <LandingFeatures />
             </main>
@@ -22,7 +22,7 @@ export default function Home() {
             {/* Footer */}
             <footer className="border-t py-8 relative z-10 bg-background/80 backdrop-blur-sm">
                 <div className="container mx-auto px-4 text-center text-muted-foreground">
-                    <p>© 2025 Antlyst. All rights reserved.</p>
+                    <p>© 2026 Antlyst. All rights reserved.</p>
                 </div>
             </footer>
         </div>
