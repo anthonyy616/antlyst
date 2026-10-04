@@ -7,9 +7,17 @@ export interface HealthStatus {
   timestamp: string;
 }
 
-function ok(): 'ok' => 'ok';
-function degraded(): 'degraded' => 'degraded';
-function fail(): 'fail' => 'fail';
+function ok(): 'ok' {
+  return 'ok';
+}
+
+function degraded(): 'degraded' {
+  return 'degraded';
+}
+
+function fail(): 'fail' {
+  return 'fail';
+}
 
 /**
  * Run non-secret diagnostics for the platform dependencies.
@@ -21,7 +29,7 @@ export async function runHealthChecks(): Promise<HealthStatus> {
 
   try {
     const db = await prisma.$queryRaw`SELECT 1 AS ok`;
-    checks.db = db.length ? ok() : fail();
+    checks.db = Array.isArray(db) && (db as { ok?: unknown }[]).length ? ok() : fail();
   } catch (error) {
     checks.db = fail();
   }
@@ -69,7 +77,7 @@ export async function runHealthChecks(): Promise<HealthStatus> {
   return { status, checks, timestamp: new Date().toISOString() };
 }
 
-export function getHealthResponse(): Response {
+export async function getHealthResponse(): Promise<Response> {
   return new Response(JSON.stringify(await runHealthChecks()), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },

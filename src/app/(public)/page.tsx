@@ -1,6 +1,7 @@
 import { LandingHeader } from '@/components/landing/LandingHeader';
 import { LandingHero } from '@/components/landing/LandingHero';
 import { LandingFeatures } from '@/components/landing/LandingFeatures';
+import { LandingDemoCTA } from '@/components/land-page-demo';
 
 export const dynamic = "force-static";
 export const revalidate = 3600;
@@ -16,6 +17,7 @@ export default function Home() {
             {/* Hero Section */}
             <main className="flex-1 container mx-auto w-full px-4 pt-12 sm:pt-20 pb-20 sm:pb-32 relative z-10">
                 <LandingHero />
+                <LandingDemoCTA />
                 <LandingFeatures />
             </main>
 

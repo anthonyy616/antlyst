@@ -1,9 +1,5 @@
-import { CreateOrganization } from "@clerk/nextjs";
+import { GuidedOnboarding } from '@/components/onboarding/GuidedOnboarding';
 
 export default function OnboardingPage() {
-    return (
-        <div className="flex min-h-screen items-center justify-center p-4">
-            <CreateOrganization afterCreateOrganizationUrl="/:id/projects" />
-        </div>
-    );
+  return <GuidedOnboarding />;
 }

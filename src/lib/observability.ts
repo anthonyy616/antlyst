@@ -59,9 +59,9 @@ export function logError(error: unknown, context?: Record<string, unknown>): voi
   if (context?.statusCode) entry.statusCode = context.statusCode;
 
   // Only safe, high-level context is attached here.
-  if (Object.keys(context ?? {}).length > 0) {
+  if (context && Object.keys(context).length > 0) {
     entry.context = Object.fromEntries(
-      Object.entries(context).filter(([key]) => {
+      Object.entries(context as Record<string, unknown>).filter(([key]) => {
         if (['body', 'payload', 'file', 'rows', 'data', 'config', 'result'].includes(key)) {
           return false;
         }
@@ -77,7 +77,7 @@ export function logError(error: unknown, context?: Record<string, unknown>): voi
 export function classifyError(error: unknown): ErrorCategory {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
-    const code = error['code']?.toString().toLowerCase() ?? '';
+    const code = (error as unknown as Record<string, unknown>)['code']?.toString().toLowerCase() ?? '';
 
     if (code === 'LIMIT_EXCEEDED' || code === 'rate_limit') return 'rate_limit';
     if (

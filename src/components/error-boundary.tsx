@@ -1,7 +1,7 @@
 'use client';
 
 import { Component, type ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home, BugSquare } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps> {
     error: null as Error | null,
   };
 
-  static override getDerivedStateFromError(error: Error) {
+  static getDerivedStatefromError(error: Error) {
     return { hasError: true, error };
   }
 
@@ -82,7 +82,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps> {
             </div>
 
             <Button variant="ghost" className="text-xs" onClick={() => (window.location.href = '/')}>
-              <BugSquare className="h-4 w-4 mr-2" />
+              <Square className="h-4 w-4 mr-2" />
               Review our status page
             </Button>
           </CardContent>
