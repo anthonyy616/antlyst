@@ -90,6 +90,7 @@ export function AIChatWithProjectSelector() {
                 <AIChatInterface
                     contextData={projectContext}
                     contextDescription={projects.find(p => p.id === selectedProjectId)?.name}
+                    projectId={selectedProjectId || undefined}
                 />
             </div>
         </div>

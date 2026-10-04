@@ -17,9 +17,19 @@ interface Message {
 interface AIChatInterfaceProps {
     contextData?: any; // Optional data context (e.g. from a CSV file)
     contextDescription?: string;
+    projectId?: string;
 }
 
-export function AIChatInterface({ contextData, contextDescription }: AIChatInterfaceProps) {
+const STARTER_PROMPTS = [
+    'What are the biggest trends in this dataset?',
+    'Which metrics changed the most?',
+    'Find anomalies or unusual records.',
+    'Summarize this dashboard for an executive.',
+    'What should I investigate next?',
+    'What would a 30-day forecast suggest?',
+];
+
+export function AIChatInterface({ contextData, contextDescription, projectId }: AIChatInterfaceProps) {
     const { user } = useUser();
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -39,11 +49,12 @@ export function AIChatInterface({ contextData, contextDescription }: AIChatInter
         }
     }, [messages, isLoading]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.SyntheticEvent, prompt?: string) => {
         e.preventDefault();
-        if (!input.trim() || isLoading) return;
+        const message = prompt ?? input;
+        if (!message.trim() || isLoading || !projectId) return;
 
-        const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input };
+        const userMsg: Message = { id: Date.now().toString(), role: 'user', content: message };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setIsLoading(true);
@@ -61,38 +72,27 @@ export function AIChatInterface({ contextData, contextDescription }: AIChatInter
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: userMsg.content,
+                    projectId,
                     context: contextPayload
                 })
             });
 
-            if (!response.ok) throw new Error('Failed to fetch AI response');
-            if (!response.body) throw new Error('No response body');
+            const data = await response.json().catch(() => null);
+            if (!response.ok) throw new Error(data?.error || 'Failed to fetch AI response');
+            if (!data?.response) throw new Error('The AI returned an empty response');
 
-            // Handle Streaming
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-
-            const aiMsgId = (Date.now() + 1).toString();
-            setMessages(prev => [...prev, { id: aiMsgId, role: 'assistant', content: '' }]);
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                setMessages(prev => prev.map(m =>
-                    m.id === aiMsgId
-                        ? { ...m, content: m.content + chunk }
-                        : m
-                ));
-            }
+            setMessages(prev => [...prev, {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant',
+                content: data.response,
+            }]);
 
         } catch (error) {
             console.error(error);
             setMessages(prev => [...prev, {
                 id: Date.now().toString(),
                 role: 'assistant',
-                content: 'Sorry, I encountered an error tracking your request. Please try again.'
+                content: error instanceof Error ? error.message : 'The AI request failed. Please try again.'
             }]);
         } finally {
             setIsLoading(false);
@@ -156,15 +156,32 @@ export function AIChatInterface({ contextData, contextDescription }: AIChatInter
                 </div>
 
                 <div className="p-4 bg-white border-t">
+                    {projectId && (
+                        <div className="mb-3 flex flex-wrap gap-2">
+                            {STARTER_PROMPTS.map((prompt) => (
+                                <Button
+                                    key={prompt}
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-auto whitespace-normal text-left text-xs"
+                                    onClick={(event) => handleSubmit(event, prompt)}
+                                    disabled={isLoading}
+                                >
+                                    {prompt}
+                                </Button>
+                            ))}
+                        </div>
+                    )}
                     <form onSubmit={handleSubmit} className="flex gap-2">
                         <Input
                             placeholder="Ask about trends, outliers, or summaries..."
                             value={input}
                             onChange={e => setInput(e.target.value)}
-                            disabled={isLoading}
+                            disabled={isLoading || !projectId}
                             className="flex-1"
                         />
-                        <Button type="submit" disabled={isLoading || !input.trim()} size="icon" className="bg-brand-purple hover:bg-brand-purple/90">
+                        <Button type="submit" disabled={isLoading || !input.trim() || !projectId} size="icon" className="bg-brand-purple hover:bg-brand-purple/90">
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         </Button>
                     </form>
