@@ -184,11 +184,10 @@ export async function POST(req: NextRequest) {
         };
 
         // Save results
-        await prisma.analysisResult.create({
-            data: {
-                fileId: fileId,
-                stats: sanitizedStats,
-            },
+        await prisma.analysisResult.upsert({
+            where: { fileId },
+            create: { fileId, stats: sanitizedStats },
+            update: { stats: sanitizedStats },
         });
 
         // Update file status
@@ -196,11 +195,25 @@ export async function POST(req: NextRequest) {
             where: { id: fileId },
             data: { uploadStatus: "completed" },
         });
+        await prisma.project.update({
+            where: { id: fileRecord.projectId },
+            data: { status: "ready" },
+        });
 
         return NextResponse.json({ success: true });
 
     } catch (error: any) {
         console.error("Error processing file:", error);
+
+        const body = await req.clone().json().catch(() => null);
+        if (body?.fileId) {
+            await prisma.file.update({
+                where: { id: body.fileId },
+                data: { uploadStatus: "failed" },
+            }).catch((statusError) => {
+                console.error("Failed to mark file processing error:", statusError);
+            });
+        }
 
         return NextResponse.json(
             { error: "Failed to process file: " + error.message },

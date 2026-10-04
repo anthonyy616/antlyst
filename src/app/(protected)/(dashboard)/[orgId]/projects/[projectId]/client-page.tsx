@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { DashboardConfig } from '@/lib/analysis-engine';
 import { DashboardView } from '@/components/DashboardView';
 import { ProjectFeed } from '@/components/feed/ProjectFeed';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ProjectDashboardClientProps {
@@ -16,6 +17,7 @@ export default function ProjectDashboardClient({ projectId }: ProjectDashboardCl
     const [feedData, setFeedData] = useState<any[] | undefined>(undefined);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [attempt, setAttempt] = useState(0);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -48,7 +50,7 @@ export default function ProjectDashboardClient({ projectId }: ProjectDashboardCl
         };
 
         fetchData();
-    }, [projectId]);
+    }, [projectId, attempt]);
 
     if (loading) {
         return (
@@ -67,6 +69,16 @@ export default function ProjectDashboardClient({ projectId }: ProjectDashboardCl
                 <AlertTitle>Error</AlertTitle>
                 <AlertDescription>
                     {error}
+                    <div className="mt-4">
+                        <Button variant="outline" size="sm" onClick={() => {
+                            setError(null);
+                            setLoading(true);
+                            setAttempt((current) => current + 1);
+                        }}>
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Retry dashboard
+                        </Button>
+                    </div>
                 </AlertDescription>
             </Alert>
         );

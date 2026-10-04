@@ -23,6 +23,7 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
     const [selectedStyle, setSelectedStyle] = useState<PlotStyle | null>(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const onDrop = useCallback(async (acceptedFiles: File[]) => {
         if (acceptedFiles.length === 0) return;
@@ -30,6 +31,7 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
         const droppedFile = acceptedFiles[0];
         setFile(droppedFile);
         setStep('parsing');
+        setError(null);
 
         try {
             // Client-side parse for preview metrics
@@ -37,7 +39,7 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
 
             if (result.meta.aborted) {
                 console.warn("CSV parse aborted");
-                alert("CSV parsing was aborted. Please check the file.");
+                setError("CSV parsing was aborted. Please choose the file again.");
                 setStep('idle');
                 return;
             }
@@ -60,7 +62,7 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
             setStep('review');
         } catch (error: any) {
             console.error("CSV Parse Error:", error);
-            alert(`Failed to parse CSV: ${error.message || "Unknown error"}. Please ensure it is a valid CSV file.`);
+            setError(`Failed to parse CSV: ${error.message || "Unknown error"}. Please ensure it is a valid CSV file.`);
             setStep('idle');
             setFile(null);
         }
@@ -82,6 +84,7 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
 
         setStep('uploading');
         setUploadProgress(0);
+        setError(null);
 
         try {
             // 1. Get Signed URL
@@ -141,24 +144,42 @@ export function UploadWizard({ orgId }: UploadWizardProps) {
             }
 
             // 3. Notify Backend
-            await fetch('/api/upload-complete', {
+            const completeRes = await fetch('/api/upload-complete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fileId, projectId }),
             });
+            if (!completeRes.ok) {
+                throw new Error('Upload completed, but the file could not be queued for processing.');
+            }
+
+            const processRes = await fetch('/api/files/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileId }),
+            });
+            if (!processRes.ok) {
+                throw new Error('Upload completed, but dashboard processing could not start.');
+            }
 
             setRedirectUrl(`/${orgId}/projects/${projectId}`);
             setStep('complete');
 
         } catch (error: any) {
             console.error(error);
-            alert(`${error.message}`);
+            setError(error.message || 'Upload failed. Please try again.');
             setStep('review');
         }
     };
 
     return (
         <Card className="p-4 md:p-8 w-full max-w-4xl mx-auto transition-all duration-300">
+            {error && (
+                <div className="mb-4 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive" role="alert">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{error}</span>
+                </div>
+            )}
             <AnimatePresence mode="wait">
                 {step === 'idle' && (
                     <motion.div
