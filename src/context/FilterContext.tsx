@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 
 export interface FilterState {
     /** Column name -> Set of selected values */
@@ -44,7 +44,21 @@ const FilterContext = createContext<FilterContextType | undefined>(undefined);
 
 export function FilterProvider({ children }: { children: React.ReactNode }) {
     const [filters, setFilters] = useState<FilterState>(defaultFilters);
-    const [savedViews, setSavedViews] = useState<SavedView[]>([]);
+    const [savedViews, setSavedViews] = useState<SavedView[]>(() => {
+        if (typeof window === 'undefined') return [];
+        const stored = window.localStorage.getItem('antlyst:saved-views');
+        if (!stored) return [];
+        try {
+            return JSON.parse(stored) as SavedView[];
+        } catch (error) {
+            console.warn('Unable to restore saved dashboard views:', error);
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        window.localStorage.setItem('antlyst:saved-views', JSON.stringify(savedViews));
+    }, [savedViews]);
 
     const setFilter = useCallback((column: string, values: Set<string>) => {
         setFilters(prev => ({

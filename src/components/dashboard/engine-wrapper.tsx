@@ -73,11 +73,18 @@ export default function EngineWrapper({ analysisResult, projectId }: EngineWrapp
     const [currentEngine, setCurrentEngine] = useState<EngineType>('simple');
     const [showTemplates, setShowTemplates] = useState(false);
     const [showConnectors, setShowConnectors] = useState(false);
+    const [activeAnalysis, setActiveAnalysis] = useState(analysisResult);
 
     const columns = analysisResult?.stats?.columns || [];
     const sampleRow = analysisResult?.stats?.preview?.[0] || {};
 
     const handleApplyTemplate = (template: any) => {
+        const generated = template.generate(columns, sampleRow);
+        setActiveAnalysis({
+            ...analysisResult,
+            kpis: generated.kpis,
+            charts: generated.charts,
+        });
         setCurrentEngine('powerbi');
     };
 
@@ -139,13 +146,13 @@ export default function EngineWrapper({ analysisResult, projectId }: EngineWrapp
             {/* Engine Content */}
             <div id="dashboard-content" className="flex-1 p-2 sm:p-3 md:p-6 bg-gray-50 dark:bg-slate-950 min-w-0 w-full overflow-hidden">
                 <Suspense fallback={<div className="flex items-center justify-center p-8 text-muted-foreground">Loading engine...</div>}>
-                    {currentEngine === 'simple' && <SimpleEngine analysisResult={analysisResult} />}
-                    {currentEngine === 'ml' && <MLPlotsEngine analysisResult={analysisResult} />}
-                    {currentEngine === 'powerbi' && <PowerBIEngine analysisResult={analysisResult} />}
+                    {currentEngine === 'simple' && <SimpleEngine analysisResult={activeAnalysis} />}
+                    {currentEngine === 'ml' && <MLPlotsEngine analysisResult={activeAnalysis} />}
+                    {currentEngine === 'powerbi' && <PowerBIEngine analysisResult={activeAnalysis} />}
                 </Suspense>
 
                 {/* Data Analysis Panels */}
-                <DataAnalysisPanels analysisResult={analysisResult} projectId={projectId} />
+                <DataAnalysisPanels analysisResult={activeAnalysis} projectId={projectId} />
             </div>
 
             {/* Template Gallery Dialog */}
