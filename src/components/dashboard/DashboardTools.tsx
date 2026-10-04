@@ -13,6 +13,7 @@ import { AutoMLPanel } from './AutoMLPanel';
 import { ReportGeneratorPanel } from './ReportGeneratorPanel';
 import { DatasetVersionsPanel } from './DatasetVersionsPanel';
 import { RefreshScheduleConfig } from './RefreshScheduleConfig';
+import DataProfilerPanel from './DataProfilerPanel';
 
 interface DashboardToolsProps {
     projectId: string;
@@ -50,6 +51,7 @@ export function DashboardTools({
         { id: 'forecast', label: 'Forecasting', content: <ForecastPanel data={data} columns={columns} /> },
         { id: 'automl', label: 'AutoML', content: <AutoMLPanel data={data} columns={columns} /> },
         { id: 'report', label: 'Report Generator', content: <ReportGeneratorPanel data={data} columns={columns} datasetName={datasetName} stats={stats} insights={insights} profile={profile} /> },
+        { id: 'quality', label: 'Data Quality', content: <DataProfilerPanel data={data} columns={columns} projectId={projectId} /> },
         { id: 'comments', label: 'Comments', content: <DashboardComments dashboardId={projectId} projectId={projectId} /> },
         { id: 'activity', label: 'Activity Log', content: <ActivityLogPanel dashboardId={projectId} projectId={projectId} /> },
     ];
