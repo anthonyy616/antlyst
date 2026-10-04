@@ -15,6 +15,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const adminIds = (process.env.ADMIN_USER_IDS || '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean);
+    if (!adminIds.includes(userId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const status = await runHealthChecks();
 
     return NextResponse.json({
