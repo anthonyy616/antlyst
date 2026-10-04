@@ -106,13 +106,14 @@ export function TemplateGallery({ open, onClose, columns, sampleRow, onApplyTemp
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Search templates..."
+                            aria-label="Search dashboard templates"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-8 h-9 text-sm"
                         />
                     </div>
                     <Select value={filterCategory} onValueChange={setFilterCategory}>
-                        <SelectTrigger className="w-[130px] h-9 text-sm">
+                        <SelectTrigger className="w-[130px] h-9 text-sm" aria-label="Filter templates by category">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

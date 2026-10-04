@@ -97,6 +97,7 @@ export function FilterBar({ columns, data }: FilterBarProps) {
                                     variant={activeValues && activeValues.size > 0 ? 'default' : 'outline'}
                                     size="sm"
                                     className="h-8 gap-1 text-xs"
+                                    aria-label={`Filter by ${col}`}
                                 >
                                     <Filter className="h-3 w-3" />
                                     <span className="hidden sm:inline truncate max-w-[80px]">{col}</span>
